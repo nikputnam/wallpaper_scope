@@ -3,16 +3,32 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
 
+    ofEnableAlphaBlending();
+    int camWidth          = 640;    // try to grab at this size.
+    int camHeight         = 480;
+
+    vidGrabber.setVerbose(true);
+    vidGrabber.setup(camWidth,camHeight);
+
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
 
+    vidGrabber.update();
+
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+    ofBackground(ofColor::gray);
 
+    ofSetColor(255);
+    vidGrabber.draw(5,5,640,480);
+    ofSetColor(ofColor::red);
+    ofDrawBitmapString("RED", 5+30, 5+30);
+    
 }
 
 //--------------------------------------------------------------

@@ -32,6 +32,8 @@ void ofApp::update(){
     fbo.begin();
     shader.begin();
 
+    shader.setUniform1f("width",float(WW));
+    shader.setUniform1f("height",float(HH));
     vidGrabber.draw(0,0);
     shader.end();
     fbo.end();

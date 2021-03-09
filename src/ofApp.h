@@ -4,6 +4,10 @@
 
 #include "ofMain.h"
 
+#define PADDING 30
+#define WW 640
+#define HH 480
+
 class ofApp : public ofBaseApp{
 
 	public:
@@ -24,6 +28,7 @@ class ofApp : public ofBaseApp{
 		void gotMessage(ofMessage msg);
 		
         ofVideoGrabber         vidGrabber;
+        ofFbo       fbo;
+        ofShader    shader;
 
-    
 };

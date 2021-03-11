@@ -35,7 +35,7 @@ void ofApp::setup(){
 void ofApp::update(){
 
     
-    float t = ofGetElapsedTimef();
+    float t = ofGetElapsedTimef()*0.2;
     float phi =t*0.05 ;
     e1 = glm::rotate( glm::vec2(150.0, 0.0) , phi) ;
     
@@ -57,6 +57,7 @@ void ofApp::update(){
 
     //glm::vec2 mxy = glm::vec2(mouseX-PADDING-PADDING-WW,mouseY-PADDING);
     glm::vec2 mxy = glm::vec2(mouseX-PADDING,mouseY-PADDING);
+    shader.setUniform1f("time", t );
     shader.setUniform2f("mouse", mxy );
     //cout << mxy << " <-- mouse\n";
     shader.setUniform1f("width",float(WW));

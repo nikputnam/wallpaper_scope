@@ -10,6 +10,15 @@ uniform sampler2DRect tex0;
 
 uniform vec4 unskew ;
 
+const int sectors[32] = int[32]( 
+    8,7,0,0,0,9,0,12,2,0,  // 0 - 9
+    3,0,0,0,13,14,5,6,0,0,   // 10-19
+    0,10,0,11,1,0,4,0,0,0,   // 20-29
+    16,15                     // 30,31
+);
+
+#define SECTOR(x, y) sectors[int( int(x<y) + 2*int((x+y)<1) + 4*int(x<0.5) + 8*int(y<0.5) + 16*int( ((x+y)<0.5)||((x+y)>1.5)||(x<(y-0.5))||(x>(y+0.5)) )) ]   
+
 void main(){
 
 //	vec4 vidColor = texture2DRect(vidTex, gl_TexCoord[0].xy);
@@ -37,21 +46,31 @@ vec4 vidColor = texture2DRect(tex0, xy);
 
     gl_FragColor = vidColor;    
 
-    if (  fract(n)>0.5 ) {
-        gl_FragColor.r = 1.0 - vidColor.r;    
-    }
 
-    if (  fract(m)>0.5) {
-        gl_FragColor.b = 1.0 - vidColor.b;    
+
+    if ( (floor(n) == floor(mouseS.x) ) && 
+            (floor(m)==floor(mouseS.y) ) ) { 
+
+        gl_FragColor.rgb = 1.0 - gl_FragColor.rgb;
+
+        if (  fract(n)>0.5 ) {
+        gl_FragColor.r = 1.0 - gl_FragColor.r ;
+        }
+
+        if (  fract(m)>0.5) {
+        gl_FragColor.b = 1.0 - gl_FragColor.b ;
+        }
+
+                //
+//                gl_FragColor   = vec4(0.0); 
+//                gl_FragColor.w = 1.0 ;  
     }
 
     float ll = length(mouse - gl_TexCoord[0].xy );
 
-    if ( (floor(n) == floor(mouseS.x) ) && 
-            (floor(m)==floor(mouseS.y) ) ) { 
-                gl_FragColor.rgb = 1.0 - gl_FragColor.rgb;
-//                gl_FragColor   = vec4(0.0); 
-//                gl_FragColor.w = 1.0 ;  
+    if (SECTOR( fract(mouseS.x), fract(mouseS.y) ) == SECTOR( fract(n),fract(m) )) {
+        gl_FragColor.rgb = vec3(0.0);
+        gl_FragColor.a = 1.0;
     }
 
     if ( ll<5.0 ) { gl_FragColor = vec4(1.0); }

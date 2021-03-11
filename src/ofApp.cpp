@@ -22,25 +22,33 @@ void ofApp::setup(){
 
     shader.load("shaders/wallpaper");
 
-    theta = glm::pi<float>() / 5.0 ;
-    e1 = glm::vec2(100.0, 0.0) ;
-    e2 = 1.2*glm::rotate(e1,theta);
+  
+    /*
+    cout << e1 << "\n";
+    cout << e2 << "\n";
+    cout << unskew[0] << "\t,\t" << unskew[1] << "\n";
+    cout << skew[0] << "\t,\t" << skew[1] << "\n";
+    cout << ii[0] << "\t,\t" << ii[1] << "\n";
+*/
+}
+//--------------------------------------------------------------
+void ofApp::update(){
+
+    
+    float t = ofGetElapsedTimef();
+    float phi =t*0.05 ;
+    e1 = glm::rotate( glm::vec2(150.0, 0.0) , phi) ;
+    
+    theta = (1.0+0.5*cos(t)) + glm::pi<float>() / 5.0 ;
+    e2 = ( 0.5*(sin(t)+2.0) )*glm::rotate(e1,theta);
     origin = glm::vec2(0.0,0.0);
     
     float alpha = glm::dot(e1,e2);
     unskew = glm::inverse( glm::mat2x2( glm::length2(e1) , alpha, alpha, glm::length2(e2) ) ) * glm::mat2x2( e1.x,  e2.x, e1.y, e2.y ) ;
     skew =glm::inverse( unskew );
     glm::mat2x2 ii = skew*unskew;
-    cout << e1 << "\n";
-    cout << e2 << "\n";
-    cout << unskew[0] << "\t,\t" << unskew[1] << "\n";
-    cout << skew[0] << "\t,\t" << skew[1] << "\n";
-    cout << ii[0] << "\t,\t" << ii[1] << "\n";
-
-}
-//--------------------------------------------------------------
-void ofApp::update(){
-
+    
+    
     vidGrabber.update();
 
     fbo.begin();
@@ -51,7 +59,7 @@ void ofApp::update(){
     //cout << mxy << " <-- mouse\n";
     shader.setUniform1f("width",float(WW));
     shader.setUniform1f("height",float(HH));
-    shader.setUniform1f("offset",ofGetElapsedTimef() * 20.0);
+    shader.setUniform1f("offset",t * 20.0);
     glm::vec4 tmp =glm::vec4( unskew[0][0], unskew[0][1], unskew[1][0], unskew[1][1] ) ;
     shader.setUniform4f("unskew", tmp );
     

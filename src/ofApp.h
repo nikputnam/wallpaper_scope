@@ -27,8 +27,16 @@ class ofApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
 		
-        ofVideoGrabber         vidGrabber;
-        ofFbo       fbo;
-        ofShader    shader;
+        ofVideoGrabber  vidGrabber;
+        ofFbo           fbo;
+        ofShader        shader;
+        
+        glm::vec2 e1 ; //(2.f, 2.f);
+        glm::vec2 e2 ; //(2.f, 2.f);
+        glm::vec2 origin ; //(2.f, 2.f);
+        float theta ;
+        glm::mat2x2 skew ;
+        glm::mat2x2 unskew ;
 
 };
+

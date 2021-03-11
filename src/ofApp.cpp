@@ -55,7 +55,8 @@ void ofApp::update(){
     fbo.begin();
     shader.begin();
 
-    glm::vec2 mxy = glm::vec2(mouseX-PADDING-PADDING-WW,mouseY-PADDING);
+    //glm::vec2 mxy = glm::vec2(mouseX-PADDING-PADDING-WW,mouseY-PADDING);
+    glm::vec2 mxy = glm::vec2(mouseX-PADDING,mouseY-PADDING);
     shader.setUniform2f("mouse", mxy );
     //cout << mxy << " <-- mouse\n";
     shader.setUniform1f("width",float(WW));
@@ -70,7 +71,8 @@ void ofApp::update(){
     
     glm::vec4 tmp2 =glm::vec4( skew[0][0], skew[0][1], skew[1][0], skew[1][1] ) ;
     shader.setUniform4f("skew", tmp2 );
-    
+    shader.setUniformTexture("last_frame", fbo.getTexture(0), 0);
+
     vidGrabber.draw(0,0);
     shader.end();
     fbo.end();
@@ -82,10 +84,10 @@ void ofApp::draw(){
     ofBackground(ofColor::gray);
 
     ofSetColor(255);
-    vidGrabber.draw(PADDING,PADDING,WW,HH);
+    //vidGrabber.draw(PADDING,PADDING,WW,HH);
     //ofSetColor(ofColor::red);
     //ofDrawBitmapString("RED", 5+30, 5+30);
-    fbo.draw(2*PADDING+WW,PADDING,WW,HH);
+    fbo.draw(PADDING,PADDING,WW,HH);
 
 }
 

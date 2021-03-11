@@ -5,6 +5,9 @@
 #include "ofMain.h"
 
 #define PADDING 30
+//#define WW 1280
+//#define HH 960
+
 #define WW 640
 #define HH 480
 
@@ -29,6 +32,7 @@ class ofApp : public ofBaseApp{
 		
         ofVideoGrabber  vidGrabber;
         ofFbo           fbo;
+        //ofFbo           feedback;
         ofShader        shader;
         
         glm::vec2 e1 ; //(2.f, 2.f);

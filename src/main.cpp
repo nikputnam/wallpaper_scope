@@ -3,7 +3,7 @@
 
 //========================================================================
 int main( ){
-    ofSetupOpenGL( (2*WW+3*PADDING) ,
+    ofSetupOpenGL( (WW+2*PADDING) ,
                   (2*PADDING+HH) ,
                   OF_WINDOW); // <-------- setup the GL context
 

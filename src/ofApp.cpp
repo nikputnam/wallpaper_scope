@@ -35,11 +35,11 @@ void ofApp::setup(){
 void ofApp::update(){
 
     
-    float t = ofGetElapsedTimef()*0.2;
-    float phi =t*0.05 ;
-    e1 = glm::rotate( glm::vec2(150.0, 0.0) , phi) ;
+    float t = ofGetElapsedTimef()*0.1;
+    float phi =t*0.3 ;
+    e1 = glm::rotate( glm::vec2(170.0, 0.0) , phi) ;
     
-    theta = (1.0+0.5*cos(t)) + glm::pi<float>() / 5.0 ;
+    theta = (1.0+0.5*cos(t*0.2)) + glm::pi<float>() / 5.0 ;
     //e2 = ( 0.5*(sin(t)+2.0) )*glm::rotate(e1,theta);
     e2 =   glm::rotate(e1,theta);   //rhombic
     origin = glm::vec2(1.0*WW/2.0,1.0*HH/2.0) + glm::vec2(40.0*sin(t),-50.0*cos(t));
@@ -52,6 +52,7 @@ void ofApp::update(){
     
     vidGrabber.update();
 
+    for (int i=0; i<2; i++ ) {
     fbo.begin();
     shader.begin();
 
@@ -76,8 +77,9 @@ void ofApp::update(){
 
     vidGrabber.draw(0,0);
     shader.end();
-    fbo.end();
     
+    fbo.end();
+    }
 }
 
 //--------------------------------------------------------------
@@ -88,7 +90,7 @@ void ofApp::draw(){
     //vidGrabber.draw(PADDING,PADDING,WW,HH);
     //ofSetColor(ofColor::red);
     //ofDrawBitmapString("RED", 5+30, 5+30);
-    fbo.draw(PADDING,PADDING,WW,HH);
+    fbo.draw(PADDING,PADDING,2*WW,2*HH);
 
 }
 

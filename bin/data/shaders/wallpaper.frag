@@ -118,7 +118,7 @@ vec2 xy =  gl_TexCoord[0].xy;
 //vec4 vidColor = texture2DRect(tex0, gl_TexCoord[0].xy);
 vec4 vidColor = texture2DRect(tex0, xy);
 
-int lattice_range = 4;
+int lattice_range = 1;
 int n_domains = 4;
 
     //gl_FragColor = vidColor;    
@@ -165,14 +165,15 @@ int n_domains = 4;
 
     vec4 averaged_vidcolor = vec4(0.0);
 
+//    vec2 xySp = xyS + vec2(0.1,0.1);
     for(int i=-lattice_range;i<=lattice_range;++i) {
         for(int j=-lattice_range;j<=lattice_range;++j) {
             for(int domain1=0;domain1<n_domains;++domain1) {
                 //vec2 new_xy = origin + float(i)*e1 + float(j)*e2 + skewM*( oij + nm );
                 mat3 M = tD[domain1] * tDinverse[domain0];
                 vec2 new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*( floor(xyS) + vec2( M * vec3( fract(xyS),1.0) )) ;
-                float ll = length(new_xy - gl_TexCoord[0].xy);
-                float mm = ll / 300.0;
+                float ll = length(new_xy + vec2(50,50) - gl_TexCoord[0].xy);
+                float mm = ll / 250.0;
 //                float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*exp( -mm*mm)  ;
                 float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*clamp(1-mm,0,1)  ;
                 vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
@@ -191,7 +192,7 @@ int n_domains = 4;
     vec3 hsv1 = rgb2hsv(rgb1);
     vec3 hsv2  = vec3( fract(hsv1.x+0.5*time), smoothstep(0.0,1.0, hsv1.y), hsv1.z ) ;
 
-    hsv2  = vec3( hsv2.x, clamp( 1.5* smoothstep(-1.0,1.0, hsv2.y),0,1), hsv1.z  ) ;
+    hsv2  = vec3( hsv2.x, clamp( 1.05* smoothstep(-1.0,1.0, hsv2.y),0,1), hsv1.z  ) ;
    // hsv2  = vec3( hsv2.x, clamp( 3.0* smoothstep(-1.0,1.0, hsv2.y),0,1), hsv1.z  ) ;
    // hsv2  = vec3( hsv2.x, clamp( 3.0* smoothstep(-1.0,1.0, hsv2.y),0,1), hsv1.z  ) ;
 //    hsv2  = vec3( hsv2.x, 1.0, smoothstep(0.0,1.0,hsv2.z) ) ;

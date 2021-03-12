@@ -3,8 +3,8 @@
 
 //========================================================================
 int main( ){
-    ofSetupOpenGL( (WW+2*PADDING) ,
-                  (2*PADDING+HH) ,
+    ofSetupOpenGL( (2*WW+2*PADDING) ,
+                  (2*PADDING+2*HH) ,
                   OF_WINDOW); // <-------- setup the GL context
 
 	// this kicks off the running of my app

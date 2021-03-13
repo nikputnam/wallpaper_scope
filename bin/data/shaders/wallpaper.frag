@@ -6,6 +6,11 @@ uniform vec2 origin;
 uniform vec2 e1;
 uniform vec2 e2;
 
+uniform float hue_shift;
+uniform float saturation_boost;
+uniform int lattice_range;
+uniform float weight_range;
+
 uniform float width;
 uniform float time;
 uniform float height;
@@ -118,7 +123,7 @@ vec2 xy =  gl_TexCoord[0].xy;
 //vec4 vidColor = texture2DRect(tex0, gl_TexCoord[0].xy);
 vec4 vidColor = texture2DRect(tex0, xy);
 
-int lattice_range = 1;
+//int lattice_range = 1;
 int n_domains = 4;
 
     //gl_FragColor = vidColor;    
@@ -173,9 +178,10 @@ int n_domains = 4;
                 mat3 M = tD[domain1] * tDinverse[domain0];
                 vec2 new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*( floor(xyS) + vec2( M * vec3( fract(xyS),1.0) )) ;
                 float ll = length(new_xy + vec2(50,50) - gl_TexCoord[0].xy);
-                float mm = ll / 250.0;
+                float mm = ll / weight_range;
 //                float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*exp( -mm*mm)  ;
                 float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*clamp(1-mm,0,1)  ;
+                //float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*1.0  ;
                 vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
                 averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*lattice_vidColor.rgb ;
                 averaged_vidcolor.a = averaged_vidcolor.a + w*1.0 ;
@@ -190,9 +196,9 @@ int n_domains = 4;
     averaged_vidcolor  = averaged_vidcolor * (1.0 / averaged_vidcolor.a );
     vec3 rgb1 = averaged_vidcolor.rgb;
     vec3 hsv1 = rgb2hsv(rgb1);
-    vec3 hsv2  = vec3( fract(hsv1.x+0.5*time), smoothstep(0.0,1.0, hsv1.y), hsv1.z ) ;
+    vec3 hsv2  = vec3( fract(hsv1.x+0.5*time+hue_shift), hsv1.y, hsv1.z ) ;
 
-    hsv2  = vec3( hsv2.x, clamp( 1.05* smoothstep(-1.0,1.0, hsv2.y),0,1), hsv1.z  ) ;
+    hsv2  = vec3( hsv2.x, clamp( saturation_boost* hsv2.y,0,1), hsv1.z  ) ;
    // hsv2  = vec3( hsv2.x, clamp( 3.0* smoothstep(-1.0,1.0, hsv2.y),0,1), hsv1.z  ) ;
    // hsv2  = vec3( hsv2.x, clamp( 3.0* smoothstep(-1.0,1.0, hsv2.y),0,1), hsv1.z  ) ;
 //    hsv2  = vec3( hsv2.x, 1.0, smoothstep(0.0,1.0,hsv2.z) ) ;

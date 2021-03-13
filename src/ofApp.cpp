@@ -4,6 +4,20 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
 
+    gui.setup();
+    gui.add(e1length.setup("lattice scale",25,5,400));
+    gui.add(hue_shift.setup("hue shift",0,0.05,1));
+    gui.add(lattice_rotation.setup("lattice rotation",0,1,glm::pi<float>()));
+    gui.add(lattice_angle.setup("lattice angle",0,1,glm::pi<float>()));
+    gui.add(saturation_boost.setup("saturation boost",0,0.01,5.0));
+    gui.add(iterations.setup("iterations",1,1,10));
+    gui.add(lattice_range.setup("lattice_range",0,1,10));
+    gui.add(weight_range.setup("weight_range",50,10,1000));
+
+    saturation_boost = 1.0;
+    iterations = 3;
+    lattice_range=1;
+    
     ofEnableAlphaBlending();
     int camWidth          = WW;    // try to grab at this size.
     int camHeight         = HH;
@@ -36,10 +50,10 @@ void ofApp::update(){
 
     
     float t = ofGetElapsedTimef()*0.1;
-    float phi =t*0.3 ;
-    e1 = glm::rotate( glm::vec2(170.0, 0.0) , phi) ;
+    float phi =float(lattice_rotation) + t*0.3 ;
+    e1 = glm::rotate( glm::vec2(float(e1length), 0.0) , phi) ;
     
-    theta = (1.0+0.5*cos(t*0.2)) + glm::pi<float>() / 5.0 ;
+    theta = float(lattice_angle) + (1.0+0.5*cos(t*0.2)) + glm::pi<float>() / 5.0 ;
     //e2 = ( 0.5*(sin(t)+2.0) )*glm::rotate(e1,theta);
     e2 =   glm::rotate(e1,theta);   //rhombic
     origin = glm::vec2(1.0*WW/2.0,1.0*HH/2.0) + glm::vec2(40.0*sin(t),-50.0*cos(t));
@@ -52,7 +66,7 @@ void ofApp::update(){
     
     vidGrabber.update();
 
-    for (int i=0; i<2; i++ ) {
+    for (int i=0; i<int(iterations); i++ ) {
     fbo.begin();
     shader.begin();
 
@@ -62,12 +76,17 @@ void ofApp::update(){
     shader.setUniform2f("mouse", mxy );
     //cout << mxy << " <-- mouse\n";
     shader.setUniform1f("width",float(WW));
-    shader.setUniform1f("height",float(HH));
+        shader.setUniform1f("height",float(HH));
+        shader.setUniform1f("hue_shift",float(hue_shift));
+        shader.setUniform1f("saturation_boost",float(saturation_boost));
     shader.setUniform1f("offset",t * 20.0);
     shader.setUniform2f("origin",origin);
     shader.setUniform2f("e1",e1);
-    shader.setUniform2f("e2",e2);
-    
+        shader.setUniform2f("e2",e2);
+        shader.setUniform1i("lattice_range",int(lattice_range));
+        
+        shader.setUniform1f("weight_range",weight_range);
+
     glm::vec4 tmp =glm::vec4( unskew[0][0], unskew[0][1], unskew[1][0], unskew[1][1] ) ;
     shader.setUniform4f("unskew", tmp );
     
@@ -91,7 +110,7 @@ void ofApp::draw(){
     //ofSetColor(ofColor::red);
     //ofDrawBitmapString("RED", 5+30, 5+30);
     fbo.draw(PADDING,PADDING,2*WW,2*HH);
-
+    gui.draw();
 }
 
 //--------------------------------------------------------------

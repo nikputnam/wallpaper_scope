@@ -3,6 +3,7 @@
 #define WEBCAM
 
 #include "ofMain.h"
+#include "ofxGui.h"
 
 #define PADDING 30
 //#define WW 1280
@@ -42,5 +43,15 @@ class ofApp : public ofBaseApp{
         glm::mat2x2 skew ;
         glm::mat2x2 unskew ;
 
+    ofxFloatSlider e1length;
+    ofxFloatSlider lattice_rotation;
+    ofxFloatSlider lattice_angle;
+    ofxFloatSlider hue_shift;
+    ofxFloatSlider saturation_boost;
+    ofxFloatSlider weight_range;
+    ofxIntSlider iterations;
+    ofxIntSlider lattice_range;
+    ofxPanel gui;
+    
 };
 

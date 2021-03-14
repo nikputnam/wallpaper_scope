@@ -8,6 +8,7 @@ uniform vec2 e2;
 
 uniform float hue_shift;
 uniform float saturation_boost;
+uniform float brightness_boost;
 uniform int lattice_range;
 uniform float weight_range;
 
@@ -183,6 +184,8 @@ int n_domains = 4;
                 float mm = ll / weight_range;
 //                float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*exp( -mm*mm)  ;
                 float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*clamp(1-mm,0,1)  ;
+                //float w=float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height);
+                //float w = clamp(1-mm,0,1)  ;
                 //float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*1.0  ;
 
 //                vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
@@ -203,7 +206,7 @@ int n_domains = 4;
     vec3 hsv1 = rgb2hsv(rgb1);
     vec3 hsv2  = vec3( fract(hsv1.x+0.5*time+hue_shift), hsv1.y, hsv1.z ) ;
 
-    hsv2  = vec3( hsv2.x, clamp( saturation_boost* hsv2.y,0,1), hsv1.z  ) ;
+    hsv2  = vec3( hsv2.x, clamp( saturation_boost* hsv2.y,0,1), clamp( brightness_boost*hsv1.z,0,1)  ) ;
    // hsv2  = vec3( hsv2.x, clamp( 3.0* smoothstep(-1.0,1.0, hsv2.y),0,1), hsv1.z  ) ;
    // hsv2  = vec3( hsv2.x, clamp( 3.0* smoothstep(-1.0,1.0, hsv2.y),0,1), hsv1.z  ) ;
 //    hsv2  = vec3( hsv2.x, 1.0, smoothstep(0.0,1.0,hsv2.z) ) ;

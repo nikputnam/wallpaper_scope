@@ -13,6 +13,7 @@ void ofApp::setup(){
     gui.add(lattice_angle.setup("lattice angle",glm::pi<float>()/3.0,0,glm::pi<float>()));
     gui.add(saturation_boost.setup("log saturation boost",0.0,-2.0,2.0));
     gui.add(brightness_boost.setup("log brightness boost",0.0,-0.10,0.10));
+    gui.add(symmetry_id.setup("symmetry group",0,0,1));
     gui.add(iterations.setup("iterations",1,0,10));
     gui.add(lattice_range.setup("lattice_range",1,0,10));
     gui.add(weight_range.setup("weight_range",500,10,1000));
@@ -110,7 +111,8 @@ void ofApp::update(){
             shader.setUniform2f("origin",origin);
             shader.setUniform2f("e1",e1);
             shader.setUniform2f("e2",e2);
-            shader.setUniform1i("lattice_range",int(lattice_range));
+        shader.setUniform1i("symmetry_id",int(symmetry_id));
+        shader.setUniform1i("lattice_range",int(lattice_range));
             shader.setUniform1f("weight_range",weight_range);
 
             glm::vec4 tmp =glm::vec4( unskew[0][0], unskew[0][1], unskew[1][0], unskew[1][1] ) ;

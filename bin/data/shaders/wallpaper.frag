@@ -10,6 +10,7 @@ uniform float hue_shift;
 uniform float saturation_boost;
 uniform float brightness_boost;
 uniform int lattice_range;
+uniform int symmetry_id;
 uniform float weight_range;
 
 uniform float width;
@@ -24,6 +25,7 @@ uniform sampler2DRect last_frame;
 uniform vec4 unskew ;
 uniform vec4   skew ;
 
+const mat3 nil           = mat3(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 const mat3 id            = mat3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 const mat3 transMhalf    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, -0.5, -0.5, 1.0 );
 const mat3 transPhalf    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, -0.5, -0.5, 1.0 );
@@ -53,31 +55,56 @@ vec3 hsv2rgb(vec3 c)
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
+#define N_SYMMETRIES 2
+#define MATRICES_PER_SYMMETRY 8
+#define CMM 0
+#define CM  1
 
-
-const mat3 tD[8] = mat3[8](
-      id,
+const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_PER_SYMMETRY](id,
+//CMM  (the first 8)
+  //    id,
      reflectBSlash,
      reflectSlash * reflectBSlash,
      reflectSlash ,
-     id,
-     id,
-     id,
-     id
+     nil,
+     nil,
+     nil,
+     nil,
+// CM   (the second 8)
+      id,
+     reflectSlash,
+     nil,
+     nil ,
+     nil,
+     nil,
+     nil,
+     nil
 ); 
 
-const mat3 tDinverse[8] = mat3[8](
+const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_PER_SYMMETRY](
+    //CMM  (the first 8)
      id,
      reflectBSlash,
      reflectSlash * reflectBSlash,
      reflectSlash ,
-     id,
-     id,
-     id,
-     id
+     nil,
+     nil,
+     nil,
+     nil,
+// CM   (the second 8)
+    id,
+     reflectSlash,
+     nil,
+     nil ,
+     nil,
+     nil,
+     nil,
+     nil
 ); 
                // mat3 M = tD[domain1] * tDinverse[domain0]
 
+
+const int domains[N_SYMMETRIES]=int[N_SYMMETRIES](4,2);
 
 const int sectors[32] = int[32]( 
     8,7,0,0,0,9,0,12,2,0,  // 0 - 9
@@ -86,17 +113,23 @@ const int sectors[32] = int[32](
     16,15                     // 30,31
 );
 
-// cmm
-const int domain[17] = int[17](
+const int domain[N_SYMMETRIES*17] = int[N_SYMMETRIES*17](
+    // cmm
     0,
     2,2,3,3,   // 1,2,3,4
     2,1,1,2,   // 5,6,7,8
     1,1,0,0,   // 9,10,11,12
-    3,0,0,3    // 13,14,15,16
+    3,0,0,3,    // 13,14,15,16
+    //cm
+        0,
+    1,1,1,1,   // 1,2,3,4
+    1,0,0,1,   // 5,6,7,8
+    0,0,0,0,   // 9,10,11,12
+    1,0,0,1    // 13,14,15,16
 );
 
 #define SECTOR(x, y) sectors[int( int(x<y) + 2*int((x+y)<1) + 4*int(x<0.5) + 8*int(y<0.5) + 16*int( ((x+y)<0.5)||((x+y)>1.5)||(x<(y-0.5))||(x>(y+0.5)) )) ]
-#define DOMAIN( s ) domain[SECTOR(s.x,s.y)]
+#define DOMAIN(g, s ) domain[g*17+SECTOR(s.x,s.y)]
 
 void main(){
 
@@ -126,7 +159,7 @@ vec2 xy =  gl_TexCoord[0].xy;
 vec4 vidColor = texture2DRect(tex0, xy);
 
 //int lattice_range = 1;
-int n_domains = 4;
+int n_domains = domains[symmetry_id];
 
     //gl_FragColor = vidColor;    
 
@@ -168,7 +201,7 @@ int n_domains = 4;
 
     if ( ll<5.0 ) { gl_FragColor = vec4(1.0); }
 
-    int domain0 = DOMAIN( fract(xyS) );
+    int domain0 = DOMAIN(symmetry_id, fract(xyS) );
 
     vec4 averaged_vidcolor = vec4(0.0);
 
@@ -177,7 +210,7 @@ int n_domains = 4;
         for(int j=-lattice_range;j<=lattice_range;++j) {
             for(int domain1=0;domain1<n_domains;++domain1) {
                 //vec2 new_xy = origin + float(i)*e1 + float(j)*e2 + skewM*( oij + nm );
-                mat3 M = tD[domain1] * tDinverse[domain0];
+                mat3 M = tD[(symmetry_id*MATRICES_PER_SYMMETRY)+domain1] * tDinverse[(symmetry_id*MATRICES_PER_SYMMETRY)+domain0];
                 vec2 new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*( floor(xyS) + vec2( M * vec3( fract(xyS),1.0) )) ;
                 //float ll = length(new_xy + vec2(50,50) - gl_TexCoord[0].xy);
                 float ll = length(new_xy  - gl_TexCoord[0].xy);

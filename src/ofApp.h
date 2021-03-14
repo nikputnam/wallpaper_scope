@@ -52,6 +52,7 @@ class ofApp : public ofBaseApp{
     ofxFloatSlider weight_range;
     ofxFloatSlider mix_f;
     ofxIntSlider iterations;
+    ofxIntSlider symmetry_id;
     ofxIntSlider lattice_range;
     ofxPanel gui;
     

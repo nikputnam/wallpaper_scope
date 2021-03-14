@@ -12,6 +12,12 @@
 #define WW 640
 #define HH 480
 
+#define CMM 0
+#define CM  1
+#define P1  2
+#define P2  3
+
+
 class ofApp : public ofBaseApp{
 
 	public:

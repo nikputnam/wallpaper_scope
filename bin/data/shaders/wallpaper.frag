@@ -30,8 +30,11 @@ const mat3 id            = mat3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 const mat3 transMhalf    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, -0.5, -0.5, 1.0 );
 const mat3 transPhalf    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, -0.5, -0.5, 1.0 );
 const mat3 reflectY      = mat3( 1.0, 0.0, 0.0, 0.0, -1.0, 0.0,  0.0,  0.0, 1.0 );
+const mat3 reflectX      = mat3( -1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.0,  0.0, 1.0 );
 const mat3 reflectSlash  = mat3( 0.0, 1.0, 0.0, 1.0,  0.0, 0.0,  0.0,  0.0, 1.0 );
 const mat3 reflectBSlash =  transPhalf * reflectY * reflectSlash * reflectY * transMhalf ;
+const mat3 rot2          =  transPhalf * reflectY * reflectX * transMhalf ;
+
 
 //  from https://stackoverflow.com/questions/15095909/from-rgb-to-hsv-in-opengl-glsl  
 //  licence = https://en.wikipedia.org/wiki/WTFPL
@@ -55,10 +58,23 @@ vec3 hsv2rgb(vec3 c)
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
-#define N_SYMMETRIES 2
+#define N_SYMMETRIES 4
 #define MATRICES_PER_SYMMETRY 8
+
+
+const int sectors[32] = int[32]( 
+    8,7,0,0,0,9,0,12,2,0,  // 0 - 9
+    3,0,0,0,13,14,5,6,0,0,   // 10-19
+    0,10,0,11,1,0,4,0,0,0,   // 20-29
+    16,15                     // 30,31
+);
+
 #define CMM 0
 #define CM  1
+#define P1  2
+#define P2  3
+
+const int domains[N_SYMMETRIES]=int[N_SYMMETRIES](4,2,1,2);
 
 const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_PER_SYMMETRY](id,
 //CMM  (the first 8)
@@ -73,6 +89,24 @@ const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_P
 // CM   (the second 8)
       id,
      reflectSlash,
+     nil,
+     nil ,
+     nil,
+     nil,
+     nil,
+     nil,
+// P1   (the second 8)
+      id,
+     nil,
+     nil,
+     nil ,
+     nil,
+     nil,
+     nil,
+     nil,
+// P2   (the second 8)
+      id,
+     rot2,
      nil,
      nil ,
      nil,
@@ -99,19 +133,30 @@ const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MAT
      nil,
      nil,
      nil,
+     nil,
+// P1   (the second 8)
+      id,
+     nil,
+     nil,
+     nil ,
+     nil,
+     nil,
+     nil,
+     nil,
+// P2   (the second 8)
+      id,
+     rot2,
+     nil,
+     nil ,
+     nil,
+     nil,
+     nil,
      nil
 ); 
                // mat3 M = tD[domain1] * tDinverse[domain0]
 
 
-const int domains[N_SYMMETRIES]=int[N_SYMMETRIES](4,2);
 
-const int sectors[32] = int[32]( 
-    8,7,0,0,0,9,0,12,2,0,  // 0 - 9
-    3,0,0,0,13,14,5,6,0,0,   // 10-19
-    0,10,0,11,1,0,4,0,0,0,   // 20-29
-    16,15                     // 30,31
-);
 
 const int domain[N_SYMMETRIES*17] = int[N_SYMMETRIES*17](
     // cmm
@@ -125,7 +170,21 @@ const int domain[N_SYMMETRIES*17] = int[N_SYMMETRIES*17](
     1,1,1,1,   // 1,2,3,4
     1,0,0,1,   // 5,6,7,8
     0,0,0,0,   // 9,10,11,12
-    1,0,0,1    // 13,14,15,16
+    1,0,0,1,    // 13,14,15,16
+
+    //p1
+        0,
+    0,0,0,0,   // 1,2,3,4
+    0,0,0,0,   // 5,6,7,8
+    0,0,0,0,   // 9,10,11,12
+    0,0,0,0,    // 13,14,15,16
+
+    //p2
+        0,
+    1,1,1,1,   // 1,2,3,4
+    1,1,1,1,   // 5,6,7,8
+    0,0,0,0,   // 9,10,11,12
+    0,0,0,0    // 13,14,15,16
 );
 
 #define SECTOR(x, y) sectors[int( int(x<y) + 2*int((x+y)<1) + 4*int(x<0.5) + 8*int(y<0.5) + 16*int( ((x+y)<0.5)||((x+y)>1.5)||(x<(y-0.5))||(x>(y+0.5)) )) ]

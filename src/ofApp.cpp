@@ -13,7 +13,7 @@ void ofApp::setup(){
     gui.add(lattice_angle.setup("lattice angle",glm::pi<float>()/3.0,0,glm::pi<float>()));
     gui.add(saturation_boost.setup("log saturation boost",0.0,-2.0,2.0));
     gui.add(brightness_boost.setup("log brightness boost",0.0,-0.10,0.10));
-    gui.add(symmetry_id.setup("symmetry group",0,0,1));
+    gui.add(symmetry_id.setup("symmetry group",0,0,3));
     gui.add(iterations.setup("iterations",1,0,10));
     gui.add(lattice_range.setup("lattice_range",1,0,10));
     gui.add(weight_range.setup("weight_range",500,10,1000));

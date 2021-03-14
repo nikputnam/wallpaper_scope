@@ -33,7 +33,7 @@ class ofApp : public ofBaseApp{
 		
         ofVideoGrabber  vidGrabber;
         ofFbo           fbo;
-        //ofFbo           feedback;
+        ofFbo           feedback;
         ofShader        shader;
         
         glm::vec2 e1 ; //(2.f, 2.f);
@@ -49,6 +49,7 @@ class ofApp : public ofBaseApp{
     ofxFloatSlider hue_shift;
     ofxFloatSlider saturation_boost;
     ofxFloatSlider weight_range;
+    ofxFloatSlider mix_f;
     ofxIntSlider iterations;
     ofxIntSlider lattice_range;
     ofxPanel gui;

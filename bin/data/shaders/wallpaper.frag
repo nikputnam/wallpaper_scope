@@ -15,8 +15,9 @@ uniform float width;
 uniform float time;
 uniform float height;
 uniform float offset;
-uniform sampler2DRect last_frame;    
+uniform float mix_f;
 uniform sampler2DRect tex0;    
+uniform sampler2DRect last_frame;    
 //uniform sampler2DRect vidTex;
 
 uniform vec4 unskew ;
@@ -177,12 +178,16 @@ int n_domains = 4;
                 //vec2 new_xy = origin + float(i)*e1 + float(j)*e2 + skewM*( oij + nm );
                 mat3 M = tD[domain1] * tDinverse[domain0];
                 vec2 new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*( floor(xyS) + vec2( M * vec3( fract(xyS),1.0) )) ;
-                float ll = length(new_xy + vec2(50,50) - gl_TexCoord[0].xy);
+                //float ll = length(new_xy + vec2(50,50) - gl_TexCoord[0].xy);
+                float ll = length(new_xy  - gl_TexCoord[0].xy);
                 float mm = ll / weight_range;
 //                float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*exp( -mm*mm)  ;
                 float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*clamp(1-mm,0,1)  ;
                 //float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*1.0  ;
+
+//                vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
                 vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
+                
                 averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*lattice_vidColor.rgb ;
                 averaged_vidcolor.a = averaged_vidcolor.a + w*1.0 ;
 
@@ -208,7 +213,10 @@ int n_domains = 4;
  //   hsv2  = vec3( hsv2.x, smoothstep(0.0,1.0, hsv2.y), smoothstep(0.0,1.0,hsv2.z) ) ;
     vec3 rgb2 = hsv2rgb(hsv2);
 
-    gl_FragColor = mix( vec4(rgb2,1.0) ,vidColor, 0.05  );
+    gl_FragColor = mix( vec4(rgb2,1.0) ,vidColor, mix_f );
+    //gl_FragColor = mix( vec4(rgb2,1.0) ,vidColor, 0.00 );
+
+    //gl_FragColor = vec4(rgb2,1.0);
 
     //gl_FragColor =  smoothstep( vec4(0.0), vec4(1.0), gl_FragColor );
     //gl_FragColor =  smoothstep( vec4(0.0), vec4(1.0), gl_FragColor );

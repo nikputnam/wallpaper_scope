@@ -7,6 +7,7 @@ uniform vec2 e1;
 uniform vec2 e2;
 
 uniform int checkerboard;
+uniform int intrainversion;
 
 uniform float hue_shift;
 uniform float saturation_boost;
@@ -285,6 +286,7 @@ int n_domains = domains[symmetry_id];
 //                vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
                 vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
                 if ((checkerboard==1) && (mod(i+j,2)==1)) { lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; }
+                if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; }
                 averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*lattice_vidColor.rgb ;
                 averaged_vidcolor.a = averaged_vidcolor.a + w*1.0 ;
 

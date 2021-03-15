@@ -55,6 +55,7 @@ class ofApp : public ofBaseApp{
     ofxFloatSlider hue_shift;
     ofxFloatSlider saturation_boost;
     ofxToggle checkerboard;
+    ofxToggle intrainversion;
     ofxFloatSlider brightness_boost;
     ofxFloatSlider weight_range;
     ofxFloatSlider mix_f;

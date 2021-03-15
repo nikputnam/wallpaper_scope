@@ -54,6 +54,7 @@ class ofApp : public ofBaseApp{
     ofxFloatSlider lattice_angle;
     ofxFloatSlider hue_shift;
     ofxFloatSlider saturation_boost;
+    ofxToggle checkerboard;
     ofxFloatSlider brightness_boost;
     ofxFloatSlider weight_range;
     ofxFloatSlider mix_f;

@@ -14,6 +14,7 @@ void ofApp::setup(){
     gui.add(saturation_boost.setup("log saturation boost",0.0,-2.0,2.0));
     gui.add(brightness_boost.setup("log brightness boost",0.0,-0.10,0.10));
     gui.add(symmetry_id.setup("symmetry group",0,0,3));
+    gui.add(checkerboard.setup("checker board",false));
     gui.add(iterations.setup("iterations",1,0,10));
     gui.add(lattice_range.setup("lattice_range",1,0,10));
     gui.add(weight_range.setup("weight_range",500,10,1000));
@@ -107,7 +108,8 @@ void ofApp::update(){
             shader.setUniform1f("hue_shift",float(hue_shift));
         shader.setUniform1f("saturation_boost",sboost);
         shader.setUniform1f("brightness_boost",bboost);
-            shader.setUniform1f("offset",t * 20.0);
+        shader.setUniform1f("offset",t * 20.0);
+        shader.setUniform1i("checkerboard",int(checkerboard));
             shader.setUniform2f("origin",origin);
             shader.setUniform2f("e1",e1);
             shader.setUniform2f("e2",e2);

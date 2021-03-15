@@ -23,7 +23,8 @@ class ofApp : public ofBaseApp{
 	public:
 		void setup();
 		void update();
-		void draw();
+    void draw();
+    void setUniforms();
 
 		void keyPressed(int key);
 		void keyReleased(int key);
@@ -54,8 +55,12 @@ class ofApp : public ofBaseApp{
     ofxFloatSlider lattice_angle;
     ofxFloatSlider hue_shift;
     ofxFloatSlider saturation_boost;
+    
     ofxToggle checkerboard;
     ofxToggle intrainversion;
+    ofxToggle post_checkerboard;
+    ofxToggle post_intrainversion;
+
     ofxFloatSlider brightness_boost;
     ofxFloatSlider weight_range;
     ofxFloatSlider mix_f;

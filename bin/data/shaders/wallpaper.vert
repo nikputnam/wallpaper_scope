@@ -19,6 +19,7 @@
 
 void main(void) {
 
+
     gl_TexCoord[0] = gl_MultiTexCoord0;
 
 //    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
@@ -30,4 +31,5 @@ void main(void) {
 
 
    gl_Position = pos;
+   
 }

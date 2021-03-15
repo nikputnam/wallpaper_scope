@@ -9,6 +9,10 @@ uniform vec2 e2;
 uniform int checkerboard;
 uniform int intrainversion;
 
+uniform int post_checkerboard;
+uniform int post_intrainversion;
+
+
 uniform float hue_shift;
 uniform float saturation_boost;
 uniform float brightness_boost;
@@ -311,6 +315,11 @@ int n_domains = domains[symmetry_id];
 //    hsv2  = vec3( hsv2.x, smoothstep(0.0,1.0, hsv2.y), smoothstep(0.0,1.0,hsv2.z) ) ;
  //   hsv2  = vec3( hsv2.x, smoothstep(0.0,1.0, hsv2.y), smoothstep(0.0,1.0,hsv2.z) ) ;
     vec3 rgb2 = hsv2rgb(hsv2);
+
+    vec2 ij = floor(xyS) ;
+    if ((post_checkerboard==1) && (mod(ij.x+ij.y,2)==1)) { rgb2 = vec3(1.0) - rgb2; }
+    if ((post_intrainversion==1) && (mod(domain0,2)==1)) { rgb2 = vec3(1.0) - rgb2; }
+
 
     gl_FragColor = mix( vec4(rgb2,1.0) ,vidColor, mix_f );
     //gl_FragColor = mix( vec4(rgb2,1.0) ,vidColor, 0.00 );

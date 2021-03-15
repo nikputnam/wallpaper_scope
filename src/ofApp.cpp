@@ -56,7 +56,8 @@ void ofApp::setup(){
 
     shader.load("shaders/wallpaper");
 
-  
+    framenr=0;
+    run_id = rand();
     /*
     cout << e1 << "\n";
     cout << e2 << "\n";
@@ -124,6 +125,7 @@ shader.setUniform1i("lattice_range",int(lattice_range));
 
 //--------------------------------------------------------------
 void ofApp::update(){
+    framenr++;
     vidGrabber.update();
 
     
@@ -172,6 +174,27 @@ void ofApp::update(){
     
 }
 
+void ofApp::grabScreen() {
+    cout << "grab screen " << framenr << "\n";
+    int w = fbo.getWidth();
+    int h = fbo.getHeight();
+    unsigned char* pixels = new unsigned char[w*h*3];  ;
+    ofImage screenGrab;
+    screenGrab.allocate(w,h,OF_IMAGE_COLOR);
+    screenGrab.setUseTexture(false);
+      
+    //copy the pixels from FBO to the pixel array; then set the normal ofImage from those pixels; and use the save method of ofImage
+      
+    fbo.begin();
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, fbo.getWidth(), fbo.getHeight(), GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    screenGrab.setFromPixels(pixels, fbo.getWidth(), fbo.getHeight(), OF_IMAGE_COLOR);
+    screenGrab.saveImage("output_"+ ofToString(run_id) + "_" + ofToString(framenr) + ".jpg", OF_IMAGE_QUALITY_MEDIUM);
+    fbo.end();
+    ofLog(OF_LOG_VERBOSE, "[DiskOut]  saved frame " + ofToString(framenr) );
+}
+
+
 //--------------------------------------------------------------
 void ofApp::draw(){
     ofBackground(ofColor::gray);
@@ -188,7 +211,7 @@ void ofApp::draw(){
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-
+    grabScreen();
 }
 
 //--------------------------------------------------------------

@@ -25,6 +25,7 @@ class ofApp : public ofBaseApp{
 		void update();
     void draw();
     void setUniforms();
+    void grabScreen() ;
 
 		void keyPressed(int key);
 		void keyReleased(int key);
@@ -49,6 +50,9 @@ class ofApp : public ofBaseApp{
         float theta ;
         glm::mat2x2 skew ;
         glm::mat2x2 unskew ;
+
+    unsigned long framenr;
+    unsigned long run_id;
 
     ofxFloatSlider e1length;
     ofxFloatSlider lattice_rotation;

@@ -54,6 +54,8 @@ class ofApp : public ofBaseApp{
     unsigned long framenr;
     unsigned long run_id;
 
+    bool paused;
+    
     ofxFloatSlider e1length;
     ofxFloatSlider lattice_rotation;
     ofxFloatSlider lattice_angle;

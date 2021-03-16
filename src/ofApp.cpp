@@ -6,6 +6,8 @@ void ofApp::setup(){
 
     //mix_f = -5.0;
     
+    paused = false;
+    
     gui.setup();
     gui.add(e1length.setup("lattice scale",200,4,1200));
     gui.add(hue_shift.setup("hue shift",0,-0.05,0.05));
@@ -125,6 +127,8 @@ shader.setUniform1i("lattice_range",int(lattice_range));
 
 //--------------------------------------------------------------
 void ofApp::update(){
+    
+    if (!paused) {
     framenr++;
     vidGrabber.update();
 
@@ -171,7 +175,7 @@ void ofApp::update(){
             shader.end();
         fbo.end();
     }
-    
+    }
 }
 
 void ofApp::grabScreen() {
@@ -211,7 +215,11 @@ void ofApp::draw(){
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-    grabScreen();
+    if (key=='g') {
+        grabScreen();
+    } else if (key == ' ') {
+        paused = !paused;
+    }
 }
 
 //--------------------------------------------------------------

@@ -304,7 +304,7 @@ int n_domains = domains[symmetry_id];
     averaged_vidcolor  = averaged_vidcolor * (1.0 / averaged_vidcolor.a );
     vec3 rgb1 = averaged_vidcolor.rgb;
     vec3 hsv1 = rgb2hsv(rgb1);
-    vec3 hsv2  = vec3( fract(hsv1.x+0.5*time+hue_shift), hsv1.y, hsv1.y < 0.2 ? smoothstep(0,1,clamp(brightness_boost* hsv1.z,0,1)) : hsv1.z ) ;
+    vec3 hsv2  = vec3( fract(hsv1.x+0.5*time+hue_shift), hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,clamp(brightness_boost* hsv1.z,0,1)) : hsv1.z ) ;
 
     hsv2  = vec3( hsv2.x, clamp( saturation_boost* hsv2.y,0,1), hsv2.z  ) ;
    // hsv2  = vec3( hsv2.x, clamp( 3.0* smoothstep(-1.0,1.0, hsv2.y),0,1), hsv1.z  ) ;

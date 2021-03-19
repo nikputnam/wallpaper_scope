@@ -10,11 +10,11 @@ void ofApp::setup(){
     
     gui.setup();
     gui.add(e1length.setup("lattice scale",200,4,1200));
-    gui.add(hue_shift.setup("hue shift",0,-0.05,0.05));
+    gui.add(hue_shift.setup("hue shift",0,-0.001,0.001));
     gui.add(lattice_rotation.setup("lattice rotation",0,0,glm::pi<float>()));
     gui.add(lattice_angle.setup("lattice angle",glm::pi<float>()/3.0,0,glm::pi<float>()));
     gui.add(saturation_boost.setup("log saturation boost",0.0,-2.0,2.0));
-    gui.add(brightness_boost.setup("log brightness boost",0.0,-0.10,0.10));
+    gui.add(brightness_boost.setup("log brightness boost",0.0,-2.0,2.0));
     gui.add(symmetry_id.setup("symmetry group",0,0,3));
     gui.add(checkerboard.setup("checker board",false));
     gui.add(intrainversion.setup("intrainversion",false));
@@ -22,7 +22,7 @@ void ofApp::setup(){
     gui.add(iterations.setup("iterations",1,0,10));
     gui.add(lattice_range.setup("lattice_range",1,0,10));
     gui.add(weight_range.setup("weight_range",500,10,1000));
-    gui.add(mix_f.setup("log(mix)",0.0,-5.0,0.0));
+    gui.add(mix_f.setup("log(mix)",0.0,-3.0,0.0));
  
     gui.add(post_checkerboard.setup("post checker board",false));
     gui.add(post_intrainversion.setup("post intrainversion",false));

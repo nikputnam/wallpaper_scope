@@ -271,6 +271,8 @@ int n_domains = domains[symmetry_id];
 
     vec4 averaged_vidcolor = vec4(0.0);
 
+    vec2 boxwh = vec2(width,0.0);
+
 //    vec2 xySp = xyS + vec2(0.1,0.1);
     for(int i=-lattice_range;i<=lattice_range;++i) {
         for(int j=-lattice_range;j<=lattice_range;++j) {
@@ -278,6 +280,8 @@ int n_domains = domains[symmetry_id];
                 //vec2 new_xy = origin + float(i)*e1 + float(j)*e2 + skewM*( oij + nm );
                 mat3 M = tD[(symmetry_id*MATRICES_PER_SYMMETRY)+domain1] * tDinverse[(symmetry_id*MATRICES_PER_SYMMETRY)+domain0];
                 vec2 new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*( floor(xyS) + vec2( M * vec3( fract(xyS),1.0) )) ;
+//                new_xy = vec2( mod((new_xy.x + width), width ), new_xy.y );
+                new_xy = mod(new_xy + boxwh+boxwh, boxwh);
                 //float ll = length(new_xy + vec2(50,50) - gl_TexCoord[0].xy);
                 float ll = length(new_xy  - gl_TexCoord[0].xy);
                 float mm = ll / weight_range;

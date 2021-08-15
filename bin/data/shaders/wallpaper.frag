@@ -194,8 +194,13 @@ const int domain[N_SYMMETRIES*17] = int[N_SYMMETRIES*17](
     0,0,0,0    // 13,14,15,16
 );
 
+//vec2 one_wrap = vec2(  )
+vec2 boxwh = vec2(width,0.0);
+
+
 #define SECTOR(x, y) sectors[int( int(x<y) + 2*int((x+y)<1) + 4*int(x<0.5) + 8*int(y<0.5) + 16*int( ((x+y)<0.5)||((x+y)>1.5)||(x<(y-0.5))||(x>(y+0.5)) )) ]
 #define DOMAIN(g, s ) domain[g*17+SECTOR(s.x,s.y)]
+#define DISTANCE(x,y) (min( length(y+boxwh-x) , min( length(x-y), length( x+boxwh-y  ) )))
 
 void main(){
 
@@ -207,6 +212,7 @@ mat2 unskewM = mat2( unskew );
 mat2 skewM = mat2( skew );
 
 vec2 xyS = unskewM * ( gl_TexCoord[0].xy  - origin);
+vec2 wrap_ij = floor( unskewM * ( boxwh ) );
 vec2 oij = floor(xyS);
 vec2 nm  = fract(xyS);
 vec2 mouseS = unskewM * (mouse-origin);
@@ -221,6 +227,8 @@ float y = gl_TexCoord[0].y ;
 vec2 xy =  gl_TexCoord[0].xy;
 //vec2 xy = vec2(width-x,y)  ;
 
+int domain0 = DOMAIN(symmetry_id, fract(xyS) );
+
 //vec4 vidColor = texture2DRect(tex0, gl_TexCoord[0].xy);
 vec4 vidColor = texture2DRect(tex0, xy);
 
@@ -230,34 +238,7 @@ int n_domains = domains[symmetry_id];
     //gl_FragColor = vidColor;    
 
 
-/*    // hilight the corrent cell and domain...
-    if ( (oij == floor(mouseS) )  ) { 
-
-        gl_FragColor.rgb = 1.0 - gl_FragColor.rgb;
-
-        if (  nm.x>0.5 ) {
-        gl_FragColor.r = 1.0 - gl_FragColor.r ;
-        }
-
-        if (  nm.y>0.5) {
-        gl_FragColor.b = 1.0 - gl_FragColor.b ;
-        }
-
-                //
-//                gl_FragColor   = vec4(0.0); 
-//                gl_FragColor.w = 1.0 ;  
-    }
-
-
-
-    if (DOMAIN( fract(mouseS) ) == DOMAIN( nm )) {
-        gl_FragColor.rgb = vec3(0.0);
-        gl_FragColor.a = 1.0;
-    }
-*/
-
-
-    float ll = length(mouse - gl_TexCoord[0].xy );
+    float ll_mouse = length(mouse - gl_TexCoord[0].xy );
 
     // translate
 //    mat3 oi = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.25, 0.25, 1.0);
@@ -265,13 +246,10 @@ int n_domains = domains[symmetry_id];
 
 
 
-    if ( ll<5.0 ) { gl_FragColor = vec4(1.0); }
 
-    int domain0 = DOMAIN(symmetry_id, fract(xyS) );
 
     vec4 averaged_vidcolor = vec4(0.0);
 
-    vec2 boxwh = vec2(width,0.0);
 
 //    vec2 xySp = xyS + vec2(0.1,0.1);
     for(int i=-lattice_range;i<=lattice_range;++i) {
@@ -283,12 +261,14 @@ int n_domains = domains[symmetry_id];
 //                new_xy = vec2( mod((new_xy.x + width), width ), new_xy.y );
                 new_xy = mod(new_xy + boxwh+boxwh, boxwh);
                 //float ll = length(new_xy + vec2(50,50) - gl_TexCoord[0].xy);
-                float ll = length(new_xy  - gl_TexCoord[0].xy);
+                float ll = DISTANCE(new_xy,xy); // length(new_xy  - xy);
+                float ll_mouse2 = DISTANCE(new_xy, mouse); //length(new_xy  - mouse);
+                float ll_mouse3 = length(xy  - mouse);
                 float mm = ll / weight_range;
 //                float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*exp( -mm*mm)  ;
-                float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*clamp(1-mm,0,1)  ;
+                //float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*clamp(1-mm,0,1)  ;
                 //float w=float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height);
-                //float w = clamp(1-mm,0,1)  ;
+                float w = clamp(1-mm,0,1)  ;
                 //float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*1.0  ;
 
 //                vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
@@ -299,7 +279,8 @@ int n_domains = domains[symmetry_id];
                 averaged_vidcolor.a = averaged_vidcolor.a + w*1.0 ;
 
                 //float lla = length(gl_TexCoord[0].xy - new_xy );
-                //if ( lla<3.0 ) { gl_FragColor = vec4(1.0); }
+                //if ( (ll_mouse2<3.0) && (ll_mouse3 < weight_range) ) { averaged_vidcolor = vec4(1.0); }
+                if ( (ll_mouse2<6.0)  ) { averaged_vidcolor = vec4(1.0,0,0,1); }
 
             }
         }   
@@ -308,7 +289,8 @@ int n_domains = domains[symmetry_id];
     averaged_vidcolor  = averaged_vidcolor * (1.0 / averaged_vidcolor.a );
     vec3 rgb1 = averaged_vidcolor.rgb;
     vec3 hsv1 = rgb2hsv(rgb1);
-    vec3 hsv2  = vec3( fract(hsv1.x+0.5*time+hue_shift), hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,clamp(brightness_boost* hsv1.z,0,1)) : hsv1.z ) ;
+    //vec3 hsv2  = vec3( fract(hsv1.x+0.5*time+hue_shift), hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,clamp(brightness_boost* hsv1.z,0,1)) : hsv1.z ) ;
+vec3 hsv2  = vec3( fract(hsv1.x+hue_shift), hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,clamp(brightness_boost* hsv1.z,0,1)) : hsv1.z ) ;
 
     hsv2  = vec3( hsv2.x, clamp( saturation_boost* hsv2.y,0,1), hsv2.z  ) ;
    // hsv2  = vec3( hsv2.x, clamp( 3.0* smoothstep(-1.0,1.0, hsv2.y),0,1), hsv1.z  ) ;
@@ -326,6 +308,35 @@ int n_domains = domains[symmetry_id];
 
 
     gl_FragColor = mix( vec4(rgb2,1.0) ,vidColor, mix_f );
+
+/*
+    // hilight the corrent cell and domain...
+    if ( (oij == floor(mouseS) )  ) { 
+
+        gl_FragColor.rgb = 1.0 - gl_FragColor.rgb;
+
+        if (  nm.x>0.5 ) {
+        gl_FragColor.r = 1.0 - gl_FragColor.r ;
+        }
+
+        if (  nm.y>0.5) {
+        gl_FragColor.b = 1.0 - gl_FragColor.b ;
+        }
+
+                //
+//                gl_FragColor   = vec4(0.0); 
+//                gl_FragColor.w = 1.0 ;  
+    }
+
+//    if (DOMAIN(symmetry_id, fract(mouseS) ) == domain0) {
+//        gl_FragColor.rgb = vec3(0.0);
+//        gl_FragColor.a = 1.0;
+//    }
+
+
+    if ( ll_mouse<5.0 ) { gl_FragColor = vec4(1.0); }
+*/
+
     //gl_FragColor = mix( vec4(rgb2,1.0) ,vidColor, 0.00 );
 
     //gl_FragColor = vec4(rgb2,1.0);

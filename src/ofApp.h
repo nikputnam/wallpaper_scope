@@ -12,6 +12,11 @@
 #define WW 640
 #define HH 480
 
+#define DRAW_FACTOR 1.5
+
+#define DRAW_WW 640*DRAW_FACTOR
+#define DRAW_HH 480*DRAW_FACTOR
+
 #define CMM 0
 #define CM  1
 #define P1  2

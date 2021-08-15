@@ -35,6 +35,8 @@ void ofApp::setup(){
     int camWidth          = WW;    // try to grab at this size.
     int camHeight         = HH;
 
+    vidGrabber.listDevices();
+    vidGrabber.setDeviceID(0);
     vidGrabber.setVerbose(true);
     vidGrabber.setup(camWidth,camHeight);
 
@@ -71,19 +73,36 @@ void ofApp::setup(){
 
 void ofApp::setUniforms() {
     
-    glm::vec2 mxy = glm::vec2(mouseX-PADDING,mouseY-PADDING);
+    glm::vec2 mxy = glm::vec2(mouseX-PADDING,mouseY-PADDING)/DRAW_FACTOR;
 
-    float t = 0.0; // ofGetElapsedTimef()*0.1;
-    float phi =float(lattice_rotation) + t*0.3 ;
-    float theta = float(lattice_angle) + (glm::pi<float>() / 4.0)*sin(t*0.2);// + (1.0+0.5*cos(t*0.2)) + glm::pi<float>() / 5.0 ;
+    float t = ofGetElapsedTimef()*0.1;
+    float phi =float(lattice_rotation) ; //+ t*0.3 ;
+    float theta = float(lattice_angle) ; // + (glm::pi<float>() / 4.0)*sin(t*0.2);// + (1.0+0.5*cos(t*0.2)) + glm::pi<float>() / 5.0 ;
     
     e1 = glm::rotate( glm::vec2(float(e1length), 0.0) , float(phi-0.5*theta) ) ;
     
     //e2 = ( 0.5*(sin(t)+2.0) )*glm::rotate(e1,theta);
     e2 =   glm::rotate(e1,theta);   //rhombic
-    origin = glm::vec2(1.0*WW/2.0,1.0*HH/2.0) + glm::vec2(40.0*sin(t),-50.0*cos(t));
+    origin = glm::vec2(1.0*WW/2.0,1.0*HH/2.0) ; // + glm::vec2(40.0*sin(t),-50.0*cos(t));
     
     float alpha = glm::dot(e1,e2);
+
+    unskew = glm::inverse( glm::mat2x2( glm::length2(e1) , alpha, alpha, glm::length2(e2) ) ) * glm::mat2x2( e1.x,  e2.x, e1.y, e2.y ) ;
+    
+    glm::vec2 wrap_ij = floor( unskew * ( glm::vec2( float(WW), 0.0 ) ));
+    glm::vec2 closest_wrap = wrap_ij.x * e1 + wrap_ij.y * e2 ;
+    float closest_wrap_distance = glm::length( closest_wrap ) ;
+    float rescale_fact = float(WW) / closest_wrap_distance  ;
+    float sintheta = closest_wrap.y / closest_wrap_distance ;
+    float costheta = closest_wrap.x / closest_wrap_distance ;
+    auto correction_rotation = glm::mat2x2( costheta,  -sintheta, sintheta, costheta ) ;
+    cout << wrap_ij.x << "\t" << wrap_ij.y << "\t" << sintheta << "\t" << costheta << "\n";
+
+    e1 = rescale_fact * correction_rotation * e1 ;
+    e2 = rescale_fact * correction_rotation * e2 ;
+
+    
+    alpha = glm::dot(e1,e2);
     unskew = glm::inverse( glm::mat2x2( glm::length2(e1) , alpha, alpha, glm::length2(e2) ) ) * glm::mat2x2( e1.x,  e2.x, e1.y, e2.y ) ;
     skew =glm::inverse( unskew );
     glm::mat2x2 ii = skew*unskew;
@@ -121,12 +140,12 @@ shader.setUniform1i("lattice_range",int(lattice_range));
     
     glm::vec4 tmp2 =glm::vec4( skew[0][0], skew[0][1], skew[1][0], skew[1][1] ) ;
     shader.setUniform4f("skew", tmp2 );
-    shader.setUniformTexture("last_frame", feedback.getTexture(0), 1);
 //shader.setUniformTexture("last_frame", vidGrabber.getTexture(), 0);
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
+    
     
     if (!paused) {
     framenr++;
@@ -207,7 +226,7 @@ void ofApp::draw(){
     //vidGrabber.draw(PADDING,PADDING,WW,HH);
     //ofSetColor(ofColor::red);
     //ofDrawBitmapString("RED", 5+30, 5+30);
-    fbo.draw(PADDING,PADDING,2*WW,2*HH);
+    fbo.draw(PADDING,PADDING,DRAW_WW,DRAW_HH);
     //fbo.draw(PADDING,PADDING,WW,HH);
     //feedback.draw(PADDING*2+WW,PADDING,WW,HH);
     gui.draw();

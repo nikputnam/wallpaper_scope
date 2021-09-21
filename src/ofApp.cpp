@@ -13,8 +13,10 @@ void ofApp::setup(){
     gui.add(hue_shift.setup("hue shift",0,-0.001,0.001));
     gui.add(lattice_rotation.setup("lattice rotation",0,0,glm::pi<float>()));
     gui.add(lattice_angle.setup("lattice angle",glm::pi<float>()/3.0,0,glm::pi<float>()));
-    gui.add(saturation_boost.setup("log saturation boost",0.0,-2.0,2.0));
-    gui.add(brightness_boost.setup("log brightness boost",0.0,-2.0,2.0));
+    gui.add(saturation_boost.setup("log saturation boost",0.0,-3.0,3.0));
+    gui.add(brightness_boost.setup("log brightness boost",0.0,-3.0,3.0));
+    gui.add(contrast_boost.setup("log contrast boost",0.0,-3.0,3.0));
+    
     gui.add(symmetry_id.setup("symmetry group",0,0,3));
     gui.add(checkerboard.setup("checker board",false));
     gui.add(intrainversion.setup("intrainversion",false));
@@ -76,7 +78,7 @@ void ofApp::setUniforms() {
     glm::vec2 mxy = glm::vec2(mouseX-PADDING,mouseY-PADDING)/DRAW_FACTOR;
 
     float t = ofGetElapsedTimef()*0.1;
-    float phi =float(lattice_rotation) ; //+ t*0.3 ;
+    float phi =float(lattice_rotation) ;//+ t*0.3 ;
     float theta = float(lattice_angle) ; // + (glm::pi<float>() / 4.0)*sin(t*0.2);// + (1.0+0.5*cos(t*0.2)) + glm::pi<float>() / 5.0 ;
     
     e1 = glm::rotate( glm::vec2(float(e1length), 0.0) , float(phi-0.5*theta) ) ;
@@ -96,7 +98,7 @@ void ofApp::setUniforms() {
     float sintheta = closest_wrap.y / closest_wrap_distance ;
     float costheta = closest_wrap.x / closest_wrap_distance ;
     auto correction_rotation = glm::mat2x2( costheta,  -sintheta, sintheta, costheta ) ;
-    cout << wrap_ij.x << "\t" << wrap_ij.y << "\t" << sintheta << "\t" << costheta << "\n";
+    //cout << wrap_ij.x << "\t" << wrap_ij.y << "\t" << sintheta << "\t" << costheta << "\n";
 
     e1 = rescale_fact * correction_rotation * e1 ;
     e2 = rescale_fact * correction_rotation * e2 ;
@@ -107,9 +109,17 @@ void ofApp::setUniforms() {
     skew =glm::inverse( unskew );
     glm::mat2x2 ii = skew*unskew;
     
+    /*
     float sboost = exp( saturation_boost/float(iterations) );
     float bboost = exp( brightness_boost/float(iterations) );
+    float cboost = exp( contrast_boost/float(iterations) );
+*/
 
+    float sboost = exp( saturation_boost );
+    float bboost = exp( brightness_boost );
+    float cboost = exp( contrast_boost );
+
+    
     //glm::vec2 mxy = glm::vec2(mouseX-PADDING-PADDING-WW,mouseY-PADDING);
     shader.setUniform1f("time", t );
     shader.setUniform2f("mouse", mxy );
@@ -118,9 +128,10 @@ void ofApp::setUniforms() {
     shader.setUniform1f("height",float(HH));
     //cout << "mix " << mix_f << "\t" << log(mix_f) <<"\n";
     shader.setUniform1f("hue_shift",float(hue_shift));
-shader.setUniform1f("saturation_boost",sboost);
-shader.setUniform1f("brightness_boost",bboost);
-shader.setUniform1f("offset",t * 20.0);
+    shader.setUniform1f("saturation_boost",sboost);
+    shader.setUniform1f("brightness_boost",bboost);
+    shader.setUniform1f("contrast_boost",cboost);
+    shader.setUniform1f("offset",t * 20.0);
 
 shader.setUniform1i("checkerboard",int(checkerboard));
 shader.setUniform1i("intrainversion",int(intrainversion));
@@ -227,6 +238,8 @@ void ofApp::draw(){
     //ofSetColor(ofColor::red);
     //ofDrawBitmapString("RED", 5+30, 5+30);
     fbo.draw(PADDING,PADDING,DRAW_WW,DRAW_HH);
+    fbo.draw(PADDING+DRAW_WW,PADDING,DRAW_WW,DRAW_HH);
+
     //fbo.draw(PADDING,PADDING,WW,HH);
     //feedback.draw(PADDING*2+WW,PADDING,WW,HH);
     gui.draw();

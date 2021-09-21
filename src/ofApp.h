@@ -73,6 +73,7 @@ class ofApp : public ofBaseApp{
     ofxToggle post_intrainversion;
 
     ofxFloatSlider brightness_boost;
+    ofxFloatSlider contrast_boost;
     ofxFloatSlider weight_range;
     ofxFloatSlider mix_f;
     ofxIntSlider iterations;

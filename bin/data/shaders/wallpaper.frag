@@ -231,7 +231,7 @@ vec2 xy =  gl_TexCoord[0].xy;
 int domain0 = DOMAIN(symmetry_id, fract(xyS) );
 
 //vec4 vidColor = texture2DRect(tex0, gl_TexCoord[0].xy);
-vec4 vidColor = texture2DRect(tex0, xy);
+vec4 vidColor = mix( texture2DRect(tex0, gl_TexCoord[0].xy)  ,texture2DRect(last_frame, gl_TexCoord[0].xy), mix_f ); // texture2DRect(tex0, xy);
 
 //int lattice_range = 1;
 int n_domains = domains[symmetry_id];
@@ -239,7 +239,7 @@ int n_domains = domains[symmetry_id];
     //gl_FragColor = vidColor;    
 
 
-    float ll_mouse = length(mouse - gl_TexCoord[0].xy );
+    //float ll_mouse = length(mouse - gl_TexCoord[0].xy );
 
     // translate
 //    mat3 oi = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.25, 0.25, 1.0);
@@ -264,7 +264,7 @@ int n_domains = domains[symmetry_id];
                 //float ll = length(new_xy + vec2(50,50) - gl_TexCoord[0].xy);
                 float ll = DISTANCE(new_xy,xy); // length(new_xy  - xy);
                 float ll_mouse2 = DISTANCE(new_xy, mouse); //length(new_xy  - mouse);
-                float ll_mouse3 = length(xy  - mouse);
+                //float ll_mouse3 = length(xy  - mouse);
                 float mm = ll / weight_range;
 //                float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*exp( -mm*mm)  ;
                 //float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*clamp(1-mm,0,1)  ;
@@ -273,7 +273,10 @@ int n_domains = domains[symmetry_id];
                 //float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*1.0  ;
 
 //                vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
-                vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
+                //vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
+                vec4 lattice_vidColor = mix( texture2DRect(tex0, new_xy)  ,texture2DRect(last_frame, new_xy), mix_f ); // texture2DRect(tex0, xy);
+                if ( (ll_mouse2<6.0)  )  {lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb;} // { averaged_vidcolor = 1.0-averaged_vidcolor; }
+
                 if ((checkerboard==1) && (mod(i+j,2)==1)) { lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; }
                 if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; }
                 averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*lattice_vidColor.rgb ;
@@ -281,7 +284,7 @@ int n_domains = domains[symmetry_id];
 
                 //float lla = length(gl_TexCoord[0].xy - new_xy );
                 //if ( (ll_mouse2<3.0) && (ll_mouse3 < weight_range) ) { averaged_vidcolor = vec4(1.0); }
-                if ( (ll_mouse2<6.0)  ) { averaged_vidcolor = vec4(1.0,0,0,1); }
+                //
 
             }
         }   
@@ -291,10 +294,17 @@ int n_domains = domains[symmetry_id];
     vec3 rgb1 = averaged_vidcolor.rgb;
     vec3 hsv1 = rgb2hsv(rgb1);
     //vec3 hsv2  = vec3( fract(hsv1.x+0.5*time+hue_shift), hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,clamp( brightness_boost* hsv1.z,0,1)) : hsv1.z ) ;
-      vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,0.5+clamp( contrast_boost* (hsv1.z-0.5),-1,1)) : hsv1.z ) ;    
-    hsv2  = vec3( hsv2.x, hsv2.y, clamp( brightness_boost*hsv2.z, 0,1)  ) ;
 
-    hsv2  = vec3( hsv2.x, clamp( saturation_boost* hsv2.y,0,1), hsv2.z  ) ;
+    hsv1  = vec3( hsv1.x, hsv1.y, clamp( brightness_boost*hsv1.z, 0,1)  ) ;
+    hsv1  = vec3( hsv1.x, clamp( saturation_boost* hsv1.y,0,1), hsv1.z  ) ;
+
+    // make value more extreme for low saturation pixels
+    //vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,0.5+clamp( contrast_boost* (hsv1.z-0.5),-0.5,0.5)) : hsv1.z ) ;    
+
+
+    //make value more extreme 
+    vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y,  smoothstep(0,1,0.5+clamp( contrast_boost* (hsv1.z-0.5),-0.5,0.5))  ) ;    
+
    // hsv2  = vec3( hsv2.x, clamp( 3.0* smoothstep(-1.0,1.0, hsv2.y),0,1), hsv1.z  ) ;
    // hsv2  = vec3( hsv2.x, clamp( 3.0* smoothstep(-1.0,1.0, hsv2.y),0,1), hsv1.z  ) ;
 //    hsv2  = vec3( hsv2.x, 1.0, smoothstep(0.0,1.0,hsv2.z) ) ;
@@ -309,7 +319,7 @@ int n_domains = domains[symmetry_id];
     if ((post_intrainversion==1) && (mod(domain0,2)==1)) { rgb2 = vec3(1.0) - rgb2; }
 
 
-    gl_FragColor = mix( vec4(rgb2,1.0) ,vidColor, mix_f );
+    gl_FragColor = vec4(rgb2,1.0) ; // 
 
 /*
     // hilight the corrent cell and domain...

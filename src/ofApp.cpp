@@ -14,7 +14,7 @@ void ofApp::setup(){
     gui.add(lattice_rotation.setup("lattice rotation",0,0,glm::pi<float>()));
     gui.add(lattice_angle.setup("lattice angle",glm::pi<float>()/3.0,0,glm::pi<float>()));
     gui.add(saturation_boost.setup("log saturation boost",0.0,-3.0,3.0));
-    gui.add(brightness_boost.setup("log brightness boost",0.0,-3.0,3.0));
+    gui.add(brightness_boost.setup("log brightness boost",0.0,-0.5,0.5));
     gui.add(contrast_boost.setup("log contrast boost",0.0,-3.0,3.0));
     
     gui.add(symmetry_id.setup("symmetry group",0,0,3));
@@ -126,6 +126,7 @@ void ofApp::setUniforms() {
     //cout << mxy << " <-- mouse\n";
     shader.setUniform1f("width",float(WW));
     shader.setUniform1f("height",float(HH));
+    shader.setUniform1f("mix_f",1.0-exp(float(mix_f)));
     //cout << "mix " << mix_f << "\t" << log(mix_f) <<"\n";
     shader.setUniform1f("hue_shift",float(hue_shift));
     shader.setUniform1f("saturation_boost",sboost);
@@ -151,7 +152,8 @@ shader.setUniform1i("lattice_range",int(lattice_range));
     
     glm::vec4 tmp2 =glm::vec4( skew[0][0], skew[0][1], skew[1][0], skew[1][1] ) ;
     shader.setUniform4f("skew", tmp2 );
-//shader.setUniformTexture("last_frame", vidGrabber.getTexture(), 0);
+    //shader.setUniformTexture("last_frame", vidGrabber.getTexture(), 0);
+    shader.setUniformTexture("last_frame", feedback.getTexture(), 1); //vidGrabber.getTexture(), 0);
 }
 
 //--------------------------------------------------------------
@@ -171,24 +173,24 @@ void ofApp::update(){
     feedback.end();
 */
     
-    for (int i=0; i<int(iterations); i++ ) {
+    //for (int i=0; i<int(iterations); i++ ) {
     fbo.begin();
         shader.begin();
         
             setUniforms();
-            shader.setUniform1f("mix_f",i==0 ? exp(float(mix_f)): 0);
+            //shader.setUniform1f("mix_f",i==0 ? exp(float(mix_f)): 0);
 
             vidGrabber.draw(0,0);
         //feedback.draw(0,0);
         shader.end();
     fbo.end();
      
-      
+        
     feedback.begin();
         fbo.draw(0,0);
     feedback.end();
      
-    }
+    //}
     
     if (post_checkerboard || post_intrainversion) {
         fbo.begin();
@@ -200,8 +202,8 @@ void ofApp::update(){
                 shader.setUniform1i("post_intrainversion",int(post_intrainversion));
                 shader.setUniform1i("lattice_range",0);
 
-                vidGrabber.draw(0,0);
-                //feedback.draw(0,0);
+                //vidGrabber.draw(0,0);
+                feedback.draw(0,0);
             shader.end();
         fbo.end();
     }

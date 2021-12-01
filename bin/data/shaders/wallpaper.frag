@@ -44,14 +44,33 @@ const mat3 transPhalfY    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.0,  0.5, 1.0 
 const mat3 reflectY      = mat3( 1.0, 0.0, 0.0, 0.0, -1.0, 0.0,  0.0,  0.0, 1.0 );
 const mat3 reflectX      = mat3( -1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.0,  0.0, 1.0 );
 const mat3 reflectSlash  = mat3( 0.0, 1.0, 0.0, 1.0,  0.0, 0.0,  0.0,  0.0, 1.0 );
+
+const mat3 transM34Y    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.75, 1.0 );
+const mat3 transM14Y    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.25, 1.0 );
+const mat3 transP34Y    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,  0.75, 1.0 );
+const mat3 transP14Y    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,  0.25, 1.0 );
+
+const mat3 transP14X    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.25, 0.0, 1.0 );
+const mat3 transM14X    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.25, 0.0, 1.0 );
+
 const mat3 reflectBSlash =  transPhalf * reflectY * reflectSlash * reflectY * transMhalf ;
 const mat3 rot2          =  transPhalf * reflectY * reflectX * transMhalf ;
+
+const mat3 rot14          =  transPhalf * reflectX * reflectSlash * transMhalf ;
+const mat3 rot34          =  transPhalf * reflectY * reflectSlash * transMhalf ;
+
 const mat3 mirrorX       =  transPhalfX * reflectX * transMhalfX ;
 const mat3 mirrorY       =  transPhalfY * reflectY * transMhalfY ;
 
 const mat3 glideX        =  transPhalfY * reflectY * transMhalf ;
 const mat3 unglideX      =  transPhalf * reflectY * transMhalfY ;
 
+const mat3 glideX34p      =  transP34Y * reflectY * transPhalfX * transM34Y ;
+const mat3 glideX34m      =  transP34Y * reflectY * transMhalfX * transM34Y ;
+const mat3 glideX14p      =  transP14Y * reflectY * transPhalfX * transM14Y ;
+const mat3 glideX14m      =  transP14Y * reflectY * transMhalfX * transM14Y ;
+
+const mat3 reflectBSlashQ = transP14Y * transP14X * reflectY * reflectSlash * reflectY * transM14X * transM14Y ;
 
 //  from https://stackoverflow.com/questions/15095909/from-rgb-to-hsv-in-opengl-glsl  
 //  licence = https://en.wikipedia.org/wiki/WTFPL
@@ -75,7 +94,7 @@ vec3 hsv2rgb(vec3 c)
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
-#define N_SYMMETRIES 8
+#define N_SYMMETRIES 12
 #define MATRICES_PER_SYMMETRY 8
 
 const int sectors[32] = int[32]( 
@@ -93,9 +112,13 @@ const int sectors[32] = int[32](
 #define PG  5
 #define PMM 6
 #define PMG 7
+#define PGG 8
+#define P4  9
+#define P4M  10
+#define P4G  11
 
 
-const int domains[N_SYMMETRIES]=int[N_SYMMETRIES](4,2,1,2,2,2,4,4);
+const int domains[N_SYMMETRIES]=int[N_SYMMETRIES](4,2,1,2,2,2,4,4,6,4,8,8);
 
 const int domain[N_SYMMETRIES*17] = int[N_SYMMETRIES*17](
     // cmm
@@ -152,7 +175,36 @@ const int domain[N_SYMMETRIES*17] = int[N_SYMMETRIES*17](
     1,1,1,1,   // 1,2,3,4
     2,2,2,2,   // 5,6,7,8
     3,3,3,3,   // 9,10,11,12
-    0,0,0,0    // 13,14,15,16
+    0,0,0,0,    // 13,14,15,16
+
+         //pgg
+        0,
+    2,0,0,2,   // 1,2,3,4
+    3,3,1,1,   // 5,6,7,8
+    1,4,4,1,   // 9,10,11,12
+    0,0,5,5,    // 13,14,15,16
+
+    //p4
+       0,
+    1,1,1,1,   // 1,2,3,4
+    2,2,2,2,   // 5,6,7,8
+    3,3,3,3,   // 9,10,11,12
+    0,0,0,0,    // 13,14,15,16
+
+     //p4m
+       0,
+    2,2,1,1,   // 1,2,3,4
+    3,4,4,3,   // 5,6,7,8
+    5,5,6,6,   // 9,10,11,12
+    0,7,7,0,    // 13,14,15,16
+
+      //p4g
+       0,
+    2,2,3,1,   // 1,2,3,4
+    4,4,5,5,   // 5,6,7,8
+    7,6,6,7,   // 9,10,11,12
+    1,1,0,0    // 13,14,15,16
+
 );
 
 const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_PER_SYMMETRY]( //id,
@@ -232,7 +284,48 @@ const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_P
      nil,
      nil,
      nil,
-     nil 
+     nil ,
+
+
+     // PGG
+      id,
+     rot2,
+     glideX14m,
+     rot2*glideX34m ,
+     rot2*glideX34p ,
+     glideX14p,
+     nil,
+     nil ,
+
+        // P4
+      id,
+     rot34,
+     rot2,
+     rot14 ,
+     nil,
+     nil,
+     nil,
+     nil ,
+
+    // P4M
+      id,    // 0
+     rot34 * reflectBSlash,  //1
+     rot34,   //2
+     rot2 * reflectSlash ,  //3
+     rot2,  //4
+     rot14 * reflectBSlash,  //5 
+     rot14,  //6
+     reflectSlash,   //7
+
+         // P4G
+      id,    // 0
+     reflectBSlashQ,  //1
+     rot34,   //2
+     reflectBSlashQ * rot34 ,  //3
+     rot2,  //4
+     reflectBSlashQ * rot2 ,  //5 
+     rot14,  //6
+     reflectSlash * rot14  //7
 ); 
 
 const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_PER_SYMMETRY](
@@ -311,7 +404,47 @@ const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MAT
      nil,
      nil,
      nil,
-     nil 
+     nil ,
+
+     // PGG
+      id,
+     rot2,
+     glideX14p,
+     glideX34p*rot2 ,
+     glideX34m*rot2 ,
+     glideX14m,
+     nil,
+     nil ,
+
+      // P4
+      id,
+     rot14,
+     rot2,
+     rot34 ,
+     nil,
+     nil,
+     nil,
+     nil , 
+
+         // P4M
+      id,    // 0
+     reflectBSlash * rot14,  //1
+     rot14,   //2
+     reflectSlash * rot2 ,  //3
+     rot2,  //4
+     reflectBSlash * rot34,  //5 
+     rot34,  //6
+     reflectSlash,   //7
+
+              // P4G
+      id,    // 0
+     reflectBSlashQ,  //1
+     rot14,   //2
+     rot14 * reflectBSlashQ  ,  //3
+     rot2,  //4
+     rot2 * reflectBSlashQ  ,  //5 
+     rot34,  //6
+     rot34 * reflectBSlashQ   //7
 ); 
                // mat3 M = tD[domain1] * tDinverse[domain0]
 

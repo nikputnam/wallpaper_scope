@@ -54,7 +54,7 @@ void ofApp::setup(){
     gui.add(brightness_boost.setup("log brightness boost",0.0,-0.5,0.5));
     gui.add(contrast_boost.setup("log contrast boost",0.0,-3.0,3.0));
     
-    gui.add(symmetry_id.setup("symmetry group",0,0,7));
+    gui.add(symmetry_id.setup("symmetry group",0,0,11));
     gui.add(checkerboard.setup("checker board",false));
     gui.add(intrainversion.setup("intrainversion",false));
 

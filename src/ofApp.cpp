@@ -43,6 +43,7 @@ void ofApp::setup(){
     //mix_f = -5.0;
     
     paused = false;
+    mouseDown = false;
     
     gui.setup();
     gui.add(e1length.setup("lattice scale",200,4,600));
@@ -108,7 +109,41 @@ void ofApp::setup(){
     cout << ii[0] << "\t,\t" << ii[1] << "\n";
 */
     
+    //3D
+    ofSetVerticalSync(true);
+    ofBackground(20);
+
+    // GL_REPEAT for texture wrap only works with NON-ARB textures //
+    ofDisableArbTex();
     
+    //           radius  , height
+    cylinder.set(WW*0.1, HH*1.1);
+    cylinder.setResolution(20, 13, 4);
+    cylinder.mapTexCoordsFromTexture( fbo.getTexture() );
+    ofSetSmoothLighting(true);
+    pointLight.setDiffuseColor( ofFloatColor(.85, .85, .55) );
+    pointLight.setSpecularColor( ofFloatColor(1.f, 1.f, 1.f));
+
+    pointLight2.setDiffuseColor( ofFloatColor( 238.f/255.f, 57.f/255.f, 135.f/255.f ));
+    pointLight2.setSpecularColor(ofFloatColor(.8f, .8f, .9f));
+
+    pointLight3.setDiffuseColor( ofFloatColor(19.f/255.f,94.f/255.f,77.f/255.f) );
+    pointLight3.setSpecularColor( ofFloatColor(18.f/255.f,150.f/255.f,135.f/255.f) );
+    //updateLightPositions();
+    
+    pointLight.setPosition(WW, HH, 1500);
+    pointLight2.setPosition(0, HH, 1500);
+    pointLight3.setPosition(WW, 0, 1500);
+    
+    
+    // shininess is a value between 0 - 128, 128 being the most shiny //
+    material.setShininess( 120 );
+    // the light highlight of the material //
+    material.setSpecularColor(ofColor(255, 255, 255, 255));
+
+    ofSetSphereResolution(24);
+    
+    //MIDI
     // print input ports to console
     midiIn.listInPorts();
 
@@ -127,6 +162,18 @@ void ofApp::setup(){
     // print received messages to the console
     midiIn.setVerbose(true);
     
+}
+
+void ofApp::updateLightPositions() {
+    pointLight.setPosition((ofGetWidth()*.5)+ cos(ofGetElapsedTimef()*.5)*(ofGetWidth()*.3), ofGetHeight()/2, 500);
+    pointLight2.setPosition((ofGetWidth()*.5)+ cos(ofGetElapsedTimef()*.15)*(ofGetWidth()*.3),
+                            ofGetHeight()*.5 + sin(ofGetElapsedTimef()*.7)*(ofGetHeight()), -300);
+
+    pointLight3.setPosition(
+                            cos(ofGetElapsedTimef()*1.5) * ofGetWidth()*.5,
+                            sin(ofGetElapsedTimef()*1.5f) * ofGetWidth()*.5,
+                            cos(ofGetElapsedTimef()*.2) * ofGetWidth()
+    );
 }
 
 void ofApp::setUniforms() {
@@ -215,6 +262,8 @@ shader.setUniform1i("lattice_range",int(lattice_range));
 //--------------------------------------------------------------
 void ofApp::update(){
     
+    
+    //updateLightPositions();
     
     
     if (!paused) {
@@ -307,8 +356,16 @@ void ofApp::processMidiEvent() {
                 if(message.control==21){c8=(message.value-63.0f)/63.0f;}
                 if(message.control==22){c9=(message.value-63.0f)/63.0f;}
                 
-                if(message.control==3){c10=(message.value-63.0f)/63.0f;}
-                if(message.control==4){c11=(message.value-63.0f)/63.0f;}
+                if(message.control==3){
+                    c10=(message.value)/128.0f;
+                    cylinder.set(WW*c10, HH*c11);
+                    cylinder.mapTexCoordsFromTexture( fbo.getTexture() );
+                }
+                if(message.control==4){
+                    c11=(message.value)/128.0f;
+                    cylinder.set(WW*c10, HH*c11);
+                    cylinder.mapTexCoordsFromTexture( fbo.getTexture() );
+                }
                 if(message.control==5){c12=(message.value-63.0f)/63.0f;}
                 if(message.control==6){c13=(message.value-63.0f)/63.0f;}
                 if(message.control==7){c14=(message.value-63.0f)/63.0f;}
@@ -475,6 +532,59 @@ void ofApp::draw(){
     fbo.draw(PADDING,PADDING,DRAW_WW,DRAW_HH);
     fbo.draw(PADDING+DRAW_WW,PADDING,DRAW_WW,DRAW_HH);
 
+    
+    
+    float spinX = sin(ofGetElapsedTimef()*.05f);
+    float spinY = cos(ofGetElapsedTimef()*.045f);
+    if (mouseDown) {
+        spinX = spinY = 0.0f;
+    }
+
+    
+    cam.setGlobalPosition({ 0,0,cam.getImagePlaneDistance(ofGetCurrentViewport()) });
+    cam.begin();
+
+    //cylinder.mapTexCoordsFromTexture( fbo.getTexture() );
+
+    ofEnableDepthTest();
+
+    ofEnableLighting();
+    pointLight.enable();
+    pointLight2.enable();
+    pointLight3.enable();
+
+    float screenWidth = ofGetWidth();
+    float screenHeight = ofGetHeight();
+
+    cylinder.setPosition(  -screenWidth * .5 + screenWidth *  2/4.f, screenHeight * -1.1/6.f, 0);
+    fbo.getTexture().bind();
+    
+    // Cylinder //
+    
+    cylinder.rotateDeg(spinX, 1.0, 0.0, 0.0);
+    cylinder.rotateDeg(spinY, 0, 1.0, 0.0);
+    
+    
+        material.begin();
+        ofFill();
+        
+            cylinder.draw();
+        
+        material.end();
+    fbo.getTexture().unbind();
+
+        ofDisableLighting();
+    
+        ofDisableDepthTest();
+
+        ofFill();
+
+        cam.end();
+    //ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
+
+    
+    
+    
     //fbo.draw(PADDING,PADDING,WW,HH);
     //feedback.draw(PADDING*2+WW,PADDING,WW,HH);
     gui.draw();
@@ -509,12 +619,12 @@ void ofApp::mouseDragged(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-
+    mouseDown = true;
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
-
+    mouseDown = false;
 }
 
 //--------------------------------------------------------------

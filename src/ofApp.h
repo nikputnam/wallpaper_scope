@@ -65,6 +65,7 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     unsigned long run_id;
 
     bool paused;
+    bool mouseDown;
     
     ofxFloatSlider e1length;
     ofxFloatSlider lattice_rotation;
@@ -86,8 +87,25 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     ofxIntSlider lattice_range;
     ofxPanel gui;
     
+    //3D
+    ofCylinderPrimitive cylinder;
     
+    ofLight pointLight;
+    ofLight pointLight2;
+    ofLight pointLight3;
+    ofMaterial material;
+
+    // place to store the sides of the box //
+    ofVboMesh boxSides[ofBoxPrimitive::SIDES_TOTAL];
+    //ofVboMesh deformPlane;
+    ofVboMesh topCap, bottomCap, body;
+    vector<ofMeshFace> triangles;
+
+    ofCamera cam;
     
+    void updateLightPositions();
+    
+    //MIDI
     void newMidiMessage(ofxMidiMessage& eventArgs);
     
     ofxMidiIn midiIn;

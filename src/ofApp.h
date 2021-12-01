@@ -19,11 +19,27 @@
 #define DRAW_WW 640*DRAW_FACTOR
 #define DRAW_HH 480*DRAW_FACTOR
 
-#define CMM 0
-#define CM  1
-#define P1  2
-#define P2  3
 
+#define CMM 0   //  rhombic
+#define CM  1   //  rhombic
+#define P1  2   //  oblique
+#define P2  3   //  oblique
+#define PM  4   //  rectangular
+#define PG  5   //  rectangular
+#define PMM 6   //  rectangular
+#define PMG 7   //  rectangular
+#define PGG 8   //  rectangular
+#define P4  9   //  square
+#define P4M  10 //  square
+#define P4G  11 //  square
+
+//TODO:
+#define P3   12 //  hexagonal
+#define P3M1 13 //  hexagonal
+#define P31M 14 //  hexagonal
+#define P6   15 //  hexagonal
+#define P6M  16 //  hexagonal
+enum LatticeType { rhombic, oblique, rectangular, square, hexagonal };
 
 class ofApp : public ofBaseApp , public ofxMidiListener {
 
@@ -68,6 +84,7 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     bool mouseDown;
     
     ofxFloatSlider e1length;
+    ofxFloatSlider lattice_aspect_ratio;
     ofxFloatSlider lattice_rotation;
     ofxFloatSlider lattice_angle;
     ofxFloatSlider hue_shift;
@@ -95,6 +112,7 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     ofLight pointLight3;
     ofMaterial material;
 
+    LatticeType symmetryGroupLatticeType[17];
     // place to store the sides of the box //
     ofVboMesh boxSides[ofBoxPrimitive::SIDES_TOTAL];
     //ofVboMesh deformPlane;

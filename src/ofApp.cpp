@@ -34,19 +34,39 @@ float c29=0;
 float c30=0;
 float c31=0;
 
-
-
-
 //--------------------------------------------------------------
 void ofApp::setup(){
 
+    symmetryGroupLatticeType[CMM] = rhombic ;
+    symmetryGroupLatticeType[CM]  = rhombic ;
+    symmetryGroupLatticeType[P1]  = oblique ;
+    symmetryGroupLatticeType[P2]  = oblique ;
+    symmetryGroupLatticeType[PM]  = rectangular ;
+    symmetryGroupLatticeType[PG]  = rectangular ;
+    symmetryGroupLatticeType[PMM]  = rectangular ;
+    symmetryGroupLatticeType[PMG]  = rectangular ;
+    symmetryGroupLatticeType[PGG]  = rectangular ;
+    symmetryGroupLatticeType[P4]  = square ;
+    symmetryGroupLatticeType[P4M]  = square ;
+    symmetryGroupLatticeType[P4G]  = square ;
+    symmetryGroupLatticeType[P3]  = hexagonal ;
+    symmetryGroupLatticeType[P3M1]  = hexagonal ;
+    symmetryGroupLatticeType[P31M]  = hexagonal ;
+    symmetryGroupLatticeType[P6]  = hexagonal ;
+    symmetryGroupLatticeType[P6M]  = hexagonal ;
+
+    
     //mix_f = -5.0;
+    
+    //
     
     paused = false;
     mouseDown = false;
     
     gui.setup();
     gui.add(e1length.setup("lattice scale",200,4,600));
+    gui.add(lattice_aspect_ratio.setup("lattice aspect ratio",1.0,0.0,1.0));
+    
     gui.add(hue_shift.setup("hue shift",0,-0.001,0.001));
     gui.add(lattice_rotation.setup("lattice rotation",0,0,glm::pi<float>()));
     gui.add(lattice_angle.setup("lattice angle",glm::pi<float>()/3.0,0,glm::pi<float>()));
@@ -187,7 +207,36 @@ void ofApp::setUniforms() {
     e1 = glm::rotate( glm::vec2(float(e1length), 0.0) , float(phi-0.5*theta) ) ;
     
     //e2 = ( 0.5*(sin(t)+2.0) )*glm::rotate(e1,theta);
-    e2 =   glm::rotate(e1,theta);   //rhombic
+    
+    //TODO
+    switch (symmetryGroupLatticeType[int(symmetry_id)]) {
+        case rhombic:
+            //cout << "rhombic" ;
+            e2 =   glm::rotate(e1,theta);   //rhombic
+            break;
+        case oblique:
+            //cout << "oblique" ;
+            e2 =   glm::rotate( float(lattice_aspect_ratio) * e1,theta);
+            break;
+
+        case rectangular:
+            //cout << "rectangular" ;
+
+            e2 =   glm::rotate( float(lattice_aspect_ratio) * e1,glm::half_pi<float>());
+            break;
+
+        case square:
+            //cout << "square" ;
+
+            e2 =   glm::rotate( e1,glm::half_pi<float>());
+            break;
+
+        case hexagonal:
+            e2 =   glm::rotate( e1,glm::pi<float>()/3.0f);
+    }
+        
+    
+    
     origin = glm::vec2(1.0*WW/2.0,1.0*HH/2.0) ; // + glm::vec2(40.0*sin(t),-50.0*cos(t));
     
     float alpha = glm::dot(e1,e2);

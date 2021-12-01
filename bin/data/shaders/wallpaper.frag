@@ -104,19 +104,25 @@ const int sectors[32] = int[32](
     16,15                     // 30,31
 );
 
-#define CMM 0
-#define CM  1
-#define P1  2
-#define P2  3
-#define PM  4
-#define PG  5
-#define PMM 6
-#define PMG 7
-#define PGG 8
-#define P4  9
-#define P4M  10
-#define P4G  11
+#define CMM 0   //  rhombic  
+#define CM  1   //  rhombic
+#define P1  2   //  oblique
+#define P2  3   //  oblique
+#define PM  4   //  rectangular
+#define PG  5   //  rectangular
+#define PMM 6   //  rectangular
+#define PMG 7   //  rectangular
+#define PGG 8   //  rectangular
+#define P4  9   //  square
+#define P4M  10 //  square
+#define P4G  11 //  square
 
+//TODO: 
+#define P3   12 //  hexagonal
+#define P3M1 13 //  hexagonal
+#define P31M 14 //  hexagonal
+#define P6   15 //  hexagonal
+#define P6M  16 //  hexagonal
 
 const int domains[N_SYMMETRIES]=int[N_SYMMETRIES](4,2,1,2,2,2,4,4,6,4,8,8);
 

@@ -4,6 +4,8 @@
 
 #include "ofMain.h"
 #include "ofxGui.h"
+#include "ofxMidi.h"
+
 
 #define PADDING 30
 //#define WW 1280
@@ -23,7 +25,7 @@
 #define P2  3
 
 
-class ofApp : public ofBaseApp{
+class ofApp : public ofBaseApp , public ofxMidiListener {
 
 	public:
 		void setup();
@@ -31,6 +33,9 @@ class ofApp : public ofBaseApp{
     void draw();
     void setUniforms();
     void grabScreen() ;
+    void listMidiEventQueue() ;
+    void processMidiEvents() ;
+    void processMidiEvent() ;
 
 		void keyPressed(int key);
 		void keyReleased(int key);
@@ -81,5 +86,13 @@ class ofApp : public ofBaseApp{
     ofxIntSlider lattice_range;
     ofxPanel gui;
     
+    
+    
+    void newMidiMessage(ofxMidiMessage& eventArgs);
+    
+    ofxMidiIn midiIn;
+    std::vector<ofxMidiMessage> midiMessages;
+    std::size_t maxMessages = 10; //< max number of messages to keep track of
+    ofMutex midiMutex; 
 };
 

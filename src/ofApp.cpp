@@ -1,6 +1,42 @@
 #include "ofApp.h"
 #define STRINGIFY(A) #A
 
+//variables for the midi controllers
+float c1=0;
+float c2=0;
+float c3=0;
+float c4=0;
+float c5=0;
+float c6=0;
+float c7=0;
+float c8=0;
+float c9=0;
+float c10=0;
+float c11=0;
+float c12=0;
+float c13=0;
+float c14=0;
+float c15=0;
+float c16=0;
+float c17=0;
+float c18=0;
+float c19=0;
+float c20=0;
+float c21=0;
+float c22=0;
+float c23=0;
+float c24=0;
+float c25=0;
+float c26=0;
+float c27=0;
+float c28=0;
+float c29=0;
+float c30=0;
+float c31=0;
+
+
+
+
 //--------------------------------------------------------------
 void ofApp::setup(){
 
@@ -9,7 +45,7 @@ void ofApp::setup(){
     paused = false;
     
     gui.setup();
-    gui.add(e1length.setup("lattice scale",200,4,1200));
+    gui.add(e1length.setup("lattice scale",200,4,600));
     gui.add(hue_shift.setup("hue shift",0,-0.001,0.001));
     gui.add(lattice_rotation.setup("lattice rotation",0,0,glm::pi<float>()));
     gui.add(lattice_angle.setup("lattice angle",glm::pi<float>()/3.0,0,glm::pi<float>()));
@@ -71,6 +107,26 @@ void ofApp::setup(){
     cout << skew[0] << "\t,\t" << skew[1] << "\n";
     cout << ii[0] << "\t,\t" << ii[1] << "\n";
 */
+    
+    
+    // print input ports to console
+    midiIn.listInPorts();
+
+    // open port by number (you may need to change this)
+    midiIn.openPort(0);
+    //midiIn.openPort("IAC Pure Data In");    // by name
+    //midiIn.openVirtualPort("ofxMidiIn Input"); // open a virtual port
+
+    // don't ignore sysex, timing, & active sense messages,
+    // these are ignored by default
+    midiIn.ignoreTypes(false, false, false);
+
+    // add ofApp as a listener
+    midiIn.addListener(this);
+
+    // print received messages to the console
+    midiIn.setVerbose(true);
+    
 }
 
 void ofApp::setUniforms() {
@@ -160,6 +216,7 @@ shader.setUniform1i("lattice_range",int(lattice_range));
 void ofApp::update(){
     
     
+    
     if (!paused) {
     framenr++;
     vidGrabber.update();
@@ -208,6 +265,181 @@ void ofApp::update(){
         fbo.end();
     }
     }
+    processMidiEvents();
+}
+
+void ofApp::processMidiEvent() {
+    if ( midiMessages.size() > 0 ) {
+        ofxMidiMessage &message = midiMessages[0];
+        
+        if(message.status < MIDI_SYSEX) {
+            if(message.status == MIDI_CONTROL_CHANGE) {
+                
+                cout << "message.control "<< message.control<< endl;
+                cout << "message.value" << message.value<< endl;
+                cout << "messages " <<  midiMessages.size() << endl;
+                
+                
+                if(message.control==9){
+                    
+                    mix_f    = mix_f.getMin() + (message.value/127.0f)*(mix_f.getMax()-mix_f.getMin()); }
+                
+                
+                if(message.control==23  && message.value == 127){ checkerboard = !checkerboard; }
+                if(message.control==24  && message.value == 127){ intrainversion = !intrainversion; }
+                if(message.control==25  && message.value == 127){ post_checkerboard = !post_checkerboard; }
+                if(message.control==26  && message.value == 127){ post_intrainversion = !post_intrainversion; }
+
+                
+                if(message.control==14){c3=(message.value-63.0f)/63.0f;
+                    e1length    = e1length.getMin() + (message.value/127.0f)*(e1length.getMax()-e1length.getMin()); }
+                
+                if(message.control==15){c1=(message.value-63.0f)/63.0f;  lattice_rotation = (message.value/127.0f)*glm::pi<float>(); }
+                if(message.control==16){c2=(message.value-63.0f)/63.0f;  lattice_angle    = (message.value/127.0f)*glm::pi<float>(); }
+                
+                if(message.control==17){
+                    saturation_boost = saturation_boost.getMin() + (message.value/127.0f)*(saturation_boost.getMax()-saturation_boost.getMin()); }
+                if(message.control==18){
+                    brightness_boost = brightness_boost.getMin() + (message.value/127.0f)*(brightness_boost.getMax()-brightness_boost.getMin()); }
+                if(message.control==19){
+                        contrast_boost = contrast_boost.getMin() + (message.value/127.0f)*(contrast_boost.getMax()-contrast_boost.getMin()); }
+                if(message.control==20){c7=(message.value-63.0f)/63.0f;}
+                if(message.control==21){c8=(message.value-63.0f)/63.0f;}
+                if(message.control==22){c9=(message.value-63.0f)/63.0f;}
+                
+                if(message.control==3){c10=(message.value-63.0f)/63.0f;}
+                if(message.control==4){c11=(message.value-63.0f)/63.0f;}
+                if(message.control==5){c12=(message.value-63.0f)/63.0f;}
+                if(message.control==6){c13=(message.value-63.0f)/63.0f;}
+                if(message.control==7){c14=(message.value-63.0f)/63.0f;}
+                if(message.control==8){c15=(message.value-63.0f)/63.0f;}
+                if(message.control==9){c16=(message.value-63.0f)/63.0f;}
+                if(message.control==10){c17=(message.value-63.0f)/63.0f;}
+                if(message.control==11){c18=(message.value-63.0f)/63.0f;}
+            }
+        }
+        
+    }
+}
+
+void ofApp::processMidiEvents() {
+
+//while(midiMessages.size() > maxMessages) {
+//    midiMessages.erase(midiMessages.begin());
+    while( midiMessages.size()>0) {
+
+    processMidiEvent();
+    midiMutex.lock();
+    midiMessages.erase(midiMessages.begin());
+    midiMutex.unlock();
+    }
+//}
+   
+    /*
+    for(unsigned int i = 0; i < midiMessages.size(); ++i) {
+
+        ofxMidiMessage &message = midiMessages[i];
+        int x = 10;
+        int y = i*40 + 40;
+
+        // draw the last recieved message contents to the screen,
+        // this doesn't print all the data from every status type
+        // but you should get the general idea
+        stringstream text;
+        text << ofxMidiMessage::getStatusString(message.status);
+        while(text.str().length() < 16) { // pad status width
+            text << " ";
+        }
+
+        //ofSetColor(127);
+        if(message.status < MIDI_SYSEX) {
+            if(message.status == MIDI_CONTROL_CHANGE) {
+                
+                cout << "message.control"<< message.control<< endl;
+                cout << "message.value"<< message.value<< endl;
+                
+                
+            }
+        }
+    }
+//}
+     */
+}
+
+void ofApp::listMidiEventQueue() {
+    //cout << "events\n";
+    
+    for(unsigned int i = 0; i < midiMessages.size(); ++i) {
+
+        ofxMidiMessage &message = midiMessages[i];
+        int x = 10;
+        int y = i*40 + 40;
+
+        // draw the last recieved message contents to the screen,
+        // this doesn't print all the data from every status type
+        // but you should get the general idea
+        stringstream text;
+        text << ofxMidiMessage::getStatusString(message.status);
+        while(text.str().length() < 16) { // pad status width
+            text << " ";
+        }
+
+        //ofSetColor(127);
+        if(message.status < MIDI_SYSEX) {
+            text << "chan: " << message.channel;
+            if(message.status == MIDI_NOTE_ON ||
+               message.status == MIDI_NOTE_OFF) {
+                text << "\tpitch: " << message.pitch;
+                ofDrawRectangle(x + ofGetWidth()*0.2, y + 12,
+                    ofMap(message.pitch, 0, 127, 0, ofGetWidth()*0.2), 10);
+                text << "\tvel: " << message.velocity;
+                ofDrawRectangle(x + (ofGetWidth()*0.2 * 2), y + 12,
+                    ofMap(message.velocity, 0, 127, 0, ofGetWidth()*0.2), 10);
+            }
+            if(message.status == MIDI_CONTROL_CHANGE) {
+                text << "\tctl: " << message.control;
+                ofDrawRectangle(x + ofGetWidth()*0.2, y + 12,
+                    ofMap(message.control, 0, 127, 0, ofGetWidth()*0.2), 10);
+                text << "\tval: " << message.value;
+                ofDrawRectangle(x + ofGetWidth()*0.2 * 2, y + 12,
+                    ofMap(message.value, 0, 127, 0, ofGetWidth()*0.2), 10);
+            }
+            else if(message.status == MIDI_PROGRAM_CHANGE) {
+                text << "\tpgm: " << message.value;
+                ofDrawRectangle(x + ofGetWidth()*0.2, y + 12,
+                    ofMap(message.value, 0, 127, 0, ofGetWidth()*0.2), 10);
+            }
+            else if(message.status == MIDI_PITCH_BEND) {
+                text << "\tval: " << message.value;
+                ofDrawRectangle(x + ofGetWidth()*0.2, y + 12,
+                    ofMap(message.value, 0, MIDI_MAX_BEND, 0, ofGetWidth()*0.2), 10);
+            }
+            else if(message.status == MIDI_AFTERTOUCH) {
+                text << "\tval: " << message.value;
+                ofDrawRectangle(x + ofGetWidth()*0.2, y + 12,
+                    ofMap(message.value, 0, 127, 0, ofGetWidth()*0.2), 10);
+            }
+            else if(message.status == MIDI_POLY_AFTERTOUCH) {
+                text << "\tpitch: " << message.pitch;
+                ofDrawRectangle(x + ofGetWidth()*0.2, y + 12,
+                    ofMap(message.pitch, 0, 127, 0, ofGetWidth()*0.2), 10);
+                text << "\tval: " << message.value;
+                ofDrawRectangle(x + ofGetWidth()*0.2 * 2, y + 12,
+                    ofMap(message.value, 0, 127, 0, ofGetWidth()*0.2), 10);
+            }
+            text << " "; // pad for delta print
+        }
+        else {
+            text << message.bytes.size() << " bytes ";
+        }
+
+        text << "delta: " << message.deltatime;
+        //text << "\n";
+        //ofSetColor(0);
+        //ofDrawBitmapString(text.str(), x, y);
+        cout << text.str() << "\n";
+        text.str(""); // clear
+    }
 }
 
 void ofApp::grabScreen() {
@@ -229,6 +461,7 @@ void ofApp::grabScreen() {
     fbo.end();
     ofLog(OF_LOG_VERBOSE, "[DiskOut]  saved frame " + ofToString(framenr) );
 }
+
 
 
 //--------------------------------------------------------------
@@ -253,6 +486,9 @@ void ofApp::keyPressed(int key){
         grabScreen();
     } else if (key == ' ') {
         paused = !paused;
+    } else if (key == 'm' ) {
+        processMidiEvents();
+        cout << "\n.\n";
     }
 }
 
@@ -304,4 +540,20 @@ void ofApp::gotMessage(ofMessage msg){
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo){ 
 
+}
+
+
+
+//--------------------------------------------------------------
+void ofApp::newMidiMessage(ofxMidiMessage& msg) {
+
+    midiMutex.lock();
+    // add the latest message to the message queue
+    midiMessages.push_back(msg);
+
+    // remove any old messages if we have too many
+    while(midiMessages.size() > maxMessages) {
+        midiMessages.erase(midiMessages.begin());
+    }
+    midiMutex.unlock();
 }

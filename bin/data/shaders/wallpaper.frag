@@ -36,12 +36,21 @@ uniform vec4   skew ;
 const mat3 nil           = mat3(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 const mat3 id            = mat3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 const mat3 transMhalf    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, -0.5, -0.5, 1.0 );
-const mat3 transPhalf    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, -0.5, -0.5, 1.0 );
+const mat3 transPhalf    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.5,  0.5, 1.0 );
+const mat3 transMhalfX    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, -0.5,  0.0, 1.0 );
+const mat3 transPhalfX    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.5,  0.0, 1.0 );
+const mat3 transMhalfY    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.5, 1.0 );
+const mat3 transPhalfY    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.0,  0.5, 1.0 );
 const mat3 reflectY      = mat3( 1.0, 0.0, 0.0, 0.0, -1.0, 0.0,  0.0,  0.0, 1.0 );
 const mat3 reflectX      = mat3( -1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.0,  0.0, 1.0 );
 const mat3 reflectSlash  = mat3( 0.0, 1.0, 0.0, 1.0,  0.0, 0.0,  0.0,  0.0, 1.0 );
 const mat3 reflectBSlash =  transPhalf * reflectY * reflectSlash * reflectY * transMhalf ;
 const mat3 rot2          =  transPhalf * reflectY * reflectX * transMhalf ;
+const mat3 mirrorX       =  transPhalfX * reflectX * transMhalfX ;
+const mat3 mirrorY       =  transPhalfY * reflectY * transMhalfY ;
+
+const mat3 glideX        =  transPhalfY * reflectY * transMhalf ;
+const mat3 unglideX      =  transPhalf * reflectY * transMhalfY ;
 
 
 //  from https://stackoverflow.com/questions/15095909/from-rgb-to-hsv-in-opengl-glsl  
@@ -66,9 +75,8 @@ vec3 hsv2rgb(vec3 c)
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
-#define N_SYMMETRIES 4
+#define N_SYMMETRIES 8
 #define MATRICES_PER_SYMMETRY 8
-
 
 const int sectors[32] = int[32]( 
     8,7,0,0,0,9,0,12,2,0,  // 0 - 9
@@ -81,12 +89,75 @@ const int sectors[32] = int[32](
 #define CM  1
 #define P1  2
 #define P2  3
+#define PM  4
+#define PG  5
+#define PMM 6
+#define PMG 7
 
-const int domains[N_SYMMETRIES]=int[N_SYMMETRIES](4,2,1,2);
 
-const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_PER_SYMMETRY](id,
+const int domains[N_SYMMETRIES]=int[N_SYMMETRIES](4,2,1,2,2,2,4,4);
+
+const int domain[N_SYMMETRIES*17] = int[N_SYMMETRIES*17](
+    // cmm
+    0,
+    2,2,3,3,   // 1,2,3,4
+    2,1,1,2,   // 5,6,7,8
+    1,1,0,0,   // 9,10,11,12
+    3,0,0,3,    // 13,14,15,16
+    //cm
+        0,
+    1,1,1,1,   // 1,2,3,4
+    1,0,0,1,   // 5,6,7,8
+    0,0,0,0,   // 9,10,11,12
+    1,0,0,1,    // 13,14,15,16
+
+    //p1
+        0,
+    0,0,0,0,   // 1,2,3,4
+    0,0,0,0,   // 5,6,7,8
+    0,0,0,0,   // 9,10,11,12
+    0,0,0,0,    // 13,14,15,16
+
+    //p2
+        0,
+    1,1,1,1,   // 1,2,3,4
+    1,1,1,1,   // 5,6,7,8
+    0,0,0,0,   // 9,10,11,12
+    0,0,0,0,    // 13,14,15,16
+
+        //pm
+        0,
+    1,1,1,1,   // 1,2,3,4
+    1,1,1,1,   // 5,6,7,8
+    0,0,0,0,   // 9,10,11,12
+    0,0,0,0,    // 13,14,15,16
+
+            //pg
+        0,
+    1,1,1,1,   // 1,2,3,4
+    1,1,1,1,   // 5,6,7,8
+    0,0,0,0,   // 9,10,11,12
+    0,0,0,0,    // 13,14,15,16
+
+
+            //pmm
+        0,
+    1,1,1,1,   // 1,2,3,4
+    2,2,2,2,   // 5,6,7,8
+    3,3,3,3,   // 9,10,11,12
+    0,0,0,0,    // 13,14,15,16
+
+     //pmg
+        0,
+    1,1,1,1,   // 1,2,3,4
+    2,2,2,2,   // 5,6,7,8
+    3,3,3,3,   // 9,10,11,12
+    0,0,0,0    // 13,14,15,16
+);
+
+const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_PER_SYMMETRY]( //id,
 //CMM  (the first 8)
-  //    id,
+     id,
      reflectBSlash,
      reflectSlash * reflectBSlash,
      reflectSlash ,
@@ -103,7 +174,7 @@ const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_P
      nil,
      nil,
      nil,
-// P1   (the second 8)
+// P1  
       id,
      nil,
      nil,
@@ -112,7 +183,7 @@ const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_P
      nil,
      nil,
      nil,
-// P2   (the second 8)
+// P2  
       id,
      rot2,
      nil,
@@ -120,7 +191,48 @@ const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_P
      nil,
      nil,
      nil,
-     nil
+     nil,
+
+// PM   
+      id,
+     mirrorX,
+     nil,
+     nil ,
+     nil,
+     nil,
+     nil,
+     nil,
+
+// PG   
+      id,
+     glideX,
+     nil,
+     nil ,
+     nil,
+     nil,
+     nil,
+     nil ,
+
+     // PMM
+      id,
+     mirrorX,
+     mirrorX * mirrorY,
+     mirrorY ,
+     nil,
+     nil,
+     nil,
+     nil ,
+
+
+     // PMG
+      id,
+     glideX * mirrorY,
+     glideX,
+     mirrorY ,
+     nil,
+     nil,
+     nil,
+     nil 
 ); 
 
 const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_PER_SYMMETRY](
@@ -159,41 +271,52 @@ const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MAT
      nil,
      nil,
      nil,
-     nil
+     nil,
+
+// PM   
+      id,
+     mirrorX,
+     nil,
+     nil ,
+     nil,
+     nil,
+     nil,
+     nil,
+// PG   
+      id,
+     unglideX,
+     nil,
+     nil ,
+     nil,
+     nil,
+     nil,
+     nil,
+
+     // PMM
+      id,
+     mirrorX,
+     mirrorX * mirrorY,
+     mirrorY ,
+     nil,
+     nil,
+     nil,
+     nil , 
+     
+
+     // PMG
+      id,
+     mirrorY * unglideX,
+     unglideX,
+     mirrorY ,
+     nil,
+     nil,
+     nil,
+     nil 
 ); 
                // mat3 M = tD[domain1] * tDinverse[domain0]
 
 
 
-
-const int domain[N_SYMMETRIES*17] = int[N_SYMMETRIES*17](
-    // cmm
-    0,
-    2,2,3,3,   // 1,2,3,4
-    2,1,1,2,   // 5,6,7,8
-    1,1,0,0,   // 9,10,11,12
-    3,0,0,3,    // 13,14,15,16
-    //cm
-        0,
-    1,1,1,1,   // 1,2,3,4
-    1,0,0,1,   // 5,6,7,8
-    0,0,0,0,   // 9,10,11,12
-    1,0,0,1,    // 13,14,15,16
-
-    //p1
-        0,
-    0,0,0,0,   // 1,2,3,4
-    0,0,0,0,   // 5,6,7,8
-    0,0,0,0,   // 9,10,11,12
-    0,0,0,0,    // 13,14,15,16
-
-    //p2
-        0,
-    1,1,1,1,   // 1,2,3,4
-    1,1,1,1,   // 5,6,7,8
-    0,0,0,0,   // 9,10,11,12
-    0,0,0,0    // 13,14,15,16
-);
 
 //vec2 one_wrap = vec2(  )
 vec2 boxwh = vec2(width,0.0);
@@ -260,7 +383,7 @@ int n_domains = domains[symmetry_id];
                 mat3 M = tD[(symmetry_id*MATRICES_PER_SYMMETRY)+domain1] * tDinverse[(symmetry_id*MATRICES_PER_SYMMETRY)+domain0];
                 vec2 new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*( floor(xyS) + vec2( M * vec3( fract(xyS),1.0) )) ;
 //                new_xy = vec2( mod((new_xy.x + width), width ), new_xy.y );
-                new_xy = mod(new_xy + boxwh+boxwh, boxwh);
+                new_xy = mod(new_xy + lattice_range*(boxwh+boxwh), boxwh);
                 //float ll = length(new_xy + vec2(50,50) - gl_TexCoord[0].xy);
                 float ll = DISTANCE(new_xy,xy); // length(new_xy  - xy);
                 float ll_mouse2 = DISTANCE(new_xy, mouse); //length(new_xy  - mouse);
@@ -274,10 +397,13 @@ int n_domains = domains[symmetry_id];
 
 //                vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
                 //vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
+                //vec4 lattice_vidColor = mix( texture2DRect(tex0, new_xy)  ,texture2DRect(last_frame, new_xy), ll_mouse2 < 100 ? mix_f : 1.0 ); // texture2DRect(tex0, xy);
+                
                 vec4 lattice_vidColor = mix( texture2DRect(tex0, new_xy)  ,texture2DRect(last_frame, new_xy), mix_f ); // texture2DRect(tex0, xy);
+                
                 if ( (ll_mouse2<6.0)  )  {lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb;} // { averaged_vidcolor = 1.0-averaged_vidcolor; }
 
-                if ((checkerboard==1) && (mod(i+j,2)==1)) { lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; }
+                if ((checkerboard==1) && (mod(i+j,2)==1))               { lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; }
                 if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; }
                 averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*lattice_vidColor.rgb ;
                 averaged_vidcolor.a = averaged_vidcolor.a + w*1.0 ;

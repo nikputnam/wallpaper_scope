@@ -107,6 +107,7 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     //3D
     ofCylinderPrimitive cylinder;
     ofVboMesh coneMesh;
+    of3dPrimitive cone;
     
     ofLight pointLight;
     ofLight pointLight2;
@@ -122,6 +123,7 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     vector<ofMeshFace> triangles;
 
     ofCamera cam;
+    ofNode view;
     
     void updateLightPositions();
     void initMesh();

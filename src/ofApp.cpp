@@ -13,8 +13,8 @@ float c8=0;
 float c9=0;
 float c10=1.0;
 float c11=1.0;
-float c12=0;
-float c13=0;
+float c12=0.7;
+float c13=0.7;
 float c14=0;
 float c15=0;
 float c16=0;
@@ -200,11 +200,10 @@ void ofApp::setup(){
     // print received messages to the console
     midiIn.setVerbose(true);
 
+    coneMesh = ofVboMesh();
     coneMesh.enableTextures();
     cone.enableTextures();
     
-    //view.rotate();
-    //coneMesh.setParent(view);
     view = ofNode();
     cout << "transform" << endl;
     cout << view.getGlobalTransformMatrix() << endl;
@@ -219,12 +218,7 @@ void ofApp::setup(){
     //coneMesh.getMesh().mapTexCoordsFromTexture( fbo.getTexture() );
 
     //cone.getMesh().enableTextures();
-    cone.enableTextures();
-    cone.getMesh().append( coneMesh );
-    //cone.getTexCoords().append( coneMesh.getTexCoords()  );
-
-    cone.setParent(view);
-    //cone.mapTexCoordsFromTexture( fbo.getTexture() );
+    
     
 }
 
@@ -352,10 +346,49 @@ shader.setUniform1i("lattice_range",int(lattice_range));
     shader.setUniformTexture("last_frame", feedback.getTexture(), 1); //vidGrabber.getTexture(), 0);
 }
 
+
+#define N_SECTORS 32
+#define N_LAYERS 5
+
+
+void ofApp::updateMesh(){
+    //Change vertices
+    
+    int n_sectors = N_SECTORS;
+    int n_layers = N_LAYERS;
+
+//    cylinder.set(WW*c10, HH*c11);
+
+    int vid=0;
+    for (int j = 0; j<n_layers; j++) {
+        for (int i=0; i<=n_sectors; i++ ) {
+            ofPoint p = cone.getMesh().getVertex(vid );
+
+            float x = float(i)*2.0f*glm::pi<float>()/float(n_sectors);
+            float r = (WW*c10+ (float(j)*250.0*c12));
+            p = glm::vec3( r*cos(x)  ,r*sin(x), j*4.5*HH*c11/float(n_layers) );
+            
+            cone.getMesh().setVertex( vid, p );
+            cone.getMesh().setTexCoord(vid, (glm::vec2(
+                                                 (float(i)/n_sectors)*WW,
+                                                 (float(j)/(n_layers))*HH*c13)  )
+                                       );
+            vid++;
+        }
+    }
+    cout << "rebuilt mesh" << endl;
+    //cone = of3dPrimitive();
+    //cone.enableTextures();
+    //cone.getMesh().append( coneMesh );
+    //cone.getTexCoords().append( coneMesh.getTexCoords()  );
+
+    //cone.setParent(view);
+}
+
 void ofApp::initMesh(){
     
-    int n_sectors = 32;
-    int n_layers = 5;
+    int n_sectors = N_SECTORS;
+    int n_layers = N_LAYERS;
 
 //    cylinder.set(WW*c10, HH*c11);
 
@@ -365,14 +398,17 @@ void ofApp::initMesh(){
        // for (float x = 0; x< 2.0f*glm::pi<float>(); x+=2.0f*glm::pi<float>()/float(n_sectors)){
         for (int i=0; i<=n_sectors; i++ ) {
             float x = float(i)*2.0f*glm::pi<float>()/float(n_sectors);
-            coneMesh.addVertex(glm::vec3( (WW*c10+ (float(j)*50.0))*cos(x)  ,(WW*c10+ (float(j)*50.0))*sin(x), j*4.5*HH*c11/float(n_layers) ));    // mesh index = x + y*width
+            float r = (WW*c10+ (float(j)*250.0*c12));
+            auto p = glm::vec3( r*cos(x)  ,r*sin(x), j*4.5*HH*c11/float(n_layers) );
+            //auto p = glm::vec3( (WW*c10+ (float(j)*250.0*c12))*cos(x)  ,(WW*c10+ (float(j)*250.0*c12))*sin(x), j*4.5*HH*c11/float(n_layers) );
+            coneMesh.addVertex(p);    // mesh index = x + y*width
                         // this replicates the pixel array within the camera bitmap...
             //mainMesh.addColor(ofFloatColor(0,0,0));  // placeholder for colour data, we'll get this from the camera
             //coneMesh.addTexCoord( glm::vec2(float(i)*float(WW)/n_sectors, float(j)*float(HH)/n_layers) );
             coneMesh.addTexCoord( (glm::vec2(
                                              (float(i)/n_sectors)*WW,
                                            // (float(j*j)/(n_layers*n_layers))*HH*0.8)  )
-                                             (float(j)/(n_layers))*HH*0.7)  )
+                                             (float(j)/(n_layers))*HH*c13)  )
                                  
                                              );
             coneMesh.addColor(ofColor(255, 255, 255));
@@ -402,17 +438,21 @@ void ofApp::initMesh(){
 
         }
     }
-    
+    //cone = of3dPrimitive();
+    cone.enableTextures();
+    cone.getMesh().append( coneMesh );
+    //cone.getTexCoords().append( coneMesh.getTexCoords()  );
+
+    cone.setParent(view);
+    //cone.mapTexCoordsFromTexture( fbo.getTexture() );
 }
 
-void ofApp::updateMesh(){
-    
-}
+
 
 //--------------------------------------------------------------
 void ofApp::update(){
     
-    updateMesh();
+    //updateMesh();
     //updateLightPositions();
     symmetry_id.setName( symmetryGroupLabel[int(symmetry_id)] );
     
@@ -502,19 +542,24 @@ void ofApp::processMidiEvent() {
                     brightness_boost = brightness_boost.getMin() + (message.value/127.0f)*(brightness_boost.getMax()-brightness_boost.getMin()); }
                 if(message.control==19){
                         contrast_boost = contrast_boost.getMin() + (message.value/127.0f)*(contrast_boost.getMax()-contrast_boost.getMin()); }
-                if(message.control==20){c7=(message.value-63.0f)/63.0f;}
+                if(message.control==20){
+                    c7=(message.value)/64.0f;
+                    lattice_aspect_ratio = c7;
+                }
                 if(message.control==21){c8=(message.value-63.0f)/63.0f;}
                 if(message.control==22){c9=(message.value-63.0f)/63.0f;}
                 
                 if(message.control==3){
                     c10=(message.value)/128.0f;
-                    cylinder.set(WW*c10, HH*c11);
+                    //cylinder.set(WW*c10, HH*c11);
                     //cylinder.mapTexCoordsFromTexture( fbo.getTexture() );
+                    updateMesh();
                 }
                 if(message.control==4){
                     c11=(message.value)/128.0f;
-                    cylinder.set(WW*c10, HH*c11);
+                    //cylinder.set(WW*c10, HH*c11);
                     //cylinder.mapTexCoordsFromTexture( fbo.getTexture() );
+                    
                     
                     for( int i = 0 ; i<  cylinder.getMesh().getNumTexCoords(); i++ ) {
                         cout << "cylinder texcoord" << i <<" " << cylinder.getMesh().getTexCoord(i) << endl;
@@ -527,11 +572,12 @@ void ofApp::processMidiEvent() {
                     for( int i = 0 ; i<  cone.getMesh().getNumTexCoords(); i++ ) {
                         cout << "cone texcoord" << i <<" " << cone.getMesh().getTexCoord(i) << endl;
                     }
-                    
+                    cout << "c10,11,12: " << c10 << " " << c11 << " " << c12 << endl;
+                    updateMesh();
                     
                 }
-                if(message.control==5){c12=(message.value-63.0f)/63.0f;}
-                if(message.control==6){c13=(message.value-63.0f)/63.0f;}
+                if(message.control==5){c12=(message.value)/123.0f; updateMesh();}
+                if(message.control==6){c13=(message.value)/63.0f; updateMesh();}
                 if(message.control==7){c14=(message.value-63.0f)/63.0f;}
                 if(message.control==8){c15=(message.value-63.0f)/63.0f;}
                 if(message.control==9){c16=(message.value-63.0f)/63.0f;}

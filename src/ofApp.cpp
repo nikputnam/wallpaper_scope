@@ -211,7 +211,7 @@ void ofApp::setup(){
 
     view.rotateDeg( glm::pi<float>()/2.0 , 1.0, 0.0, 0.0);
     view.rotateDeg( glm::pi<float>()/3.0, 0, 1.0, 0.0);
-    view.setScale(0.25);
+    view.setScale(0.2);
     cout << view.getGlobalTransformMatrix()<< endl;
     
     initMesh();
@@ -365,13 +365,16 @@ void ofApp::initMesh(){
        // for (float x = 0; x< 2.0f*glm::pi<float>(); x+=2.0f*glm::pi<float>()/float(n_sectors)){
         for (int i=0; i<=n_sectors; i++ ) {
             float x = float(i)*2.0f*glm::pi<float>()/float(n_sectors);
-            coneMesh.addVertex(glm::vec3( (WW*c10+ (float(j)*50.0))*cos(x)  ,(WW*c10+ (float(j)*50.0))*sin(x), j*3.0*HH*c11/float(n_layers) ));    // mesh index = x + y*width
+            coneMesh.addVertex(glm::vec3( (WW*c10+ (float(j)*50.0))*cos(x)  ,(WW*c10+ (float(j)*50.0))*sin(x), j*4.5*HH*c11/float(n_layers) ));    // mesh index = x + y*width
                         // this replicates the pixel array within the camera bitmap...
             //mainMesh.addColor(ofFloatColor(0,0,0));  // placeholder for colour data, we'll get this from the camera
             //coneMesh.addTexCoord( glm::vec2(float(i)*float(WW)/n_sectors, float(j)*float(HH)/n_layers) );
             coneMesh.addTexCoord( (glm::vec2(
                                              (float(i)/n_sectors)*WW,
-                                            (float(j)/n_layers)*HH)  ));
+                                           // (float(j*j)/(n_layers*n_layers))*HH*0.8)  )
+                                             (float(j)/(n_layers))*HH*0.7)  )
+                                 
+                                             );
             coneMesh.addColor(ofColor(255, 255, 255));
         }
     }

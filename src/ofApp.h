@@ -106,6 +106,7 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     
     //3D
     ofCylinderPrimitive cylinder;
+    ofVboMesh coneMesh;
     
     ofLight pointLight;
     ofLight pointLight2;
@@ -113,6 +114,7 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     ofMaterial material;
 
     LatticeType symmetryGroupLatticeType[17];
+    std::string symmetryGroupLabel[17];
     // place to store the sides of the box //
     ofVboMesh boxSides[ofBoxPrimitive::SIDES_TOTAL];
     //ofVboMesh deformPlane;
@@ -122,7 +124,9 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     ofCamera cam;
     
     void updateLightPositions();
-    
+    void initMesh();
+    void updateMesh();
+
     //MIDI
     void newMidiMessage(ofxMidiMessage& eventArgs);
     

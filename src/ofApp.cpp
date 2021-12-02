@@ -11,8 +11,8 @@ float c6=0;
 float c7=0;
 float c8=0;
 float c9=0;
-float c10=0;
-float c11=0;
+float c10=1.0;
+float c11=1.0;
 float c12=0;
 float c13=0;
 float c14=0;
@@ -37,6 +37,7 @@ float c31=0;
 //--------------------------------------------------------------
 void ofApp::setup(){
 
+    
     symmetryGroupLatticeType[CMM] = rhombic ;
     symmetryGroupLatticeType[CM]  = rhombic ;
     symmetryGroupLatticeType[P1]  = oblique ;
@@ -55,6 +56,23 @@ void ofApp::setup(){
     symmetryGroupLatticeType[P6]  = hexagonal ;
     symmetryGroupLatticeType[P6M]  = hexagonal ;
 
+    symmetryGroupLabel[CMM] = "CMM" ;
+    symmetryGroupLabel[CM]  = "CM" ;
+    symmetryGroupLabel[P1]  = "P1" ;
+    symmetryGroupLabel[P2]  = "P2" ;
+    symmetryGroupLabel[PM]  = "PM" ;
+    symmetryGroupLabel[PG]  = "PG" ;
+    symmetryGroupLabel[PMM]  = "PMM" ;
+    symmetryGroupLabel[PMG]  = "PMG" ;
+    symmetryGroupLabel[PGG]  = "PGG" ;
+    symmetryGroupLabel[P4]  = "P4" ;
+    symmetryGroupLabel[P4M]  = "P4M" ;
+    symmetryGroupLabel[P4G]  = "P4G" ;
+    symmetryGroupLabel[P3]  = "P3" ;
+    symmetryGroupLabel[P3M1]  = "P3M1" ;
+    symmetryGroupLabel[P31M]  = "P31M" ;
+    symmetryGroupLabel[P6]  = "P6" ;
+    symmetryGroupLabel[P6M]  = "P6M" ;
     
     //mix_f = -5.0;
     
@@ -181,7 +199,8 @@ void ofApp::setup(){
 
     // print received messages to the console
     midiIn.setVerbose(true);
-    
+    initMesh();
+
 }
 
 void ofApp::updateLightPositions() {
@@ -308,12 +327,49 @@ shader.setUniform1i("lattice_range",int(lattice_range));
     shader.setUniformTexture("last_frame", feedback.getTexture(), 1); //vidGrabber.getTexture(), 0);
 }
 
+void ofApp::initMesh(){
+    
+    int n_sectors = 72;
+    int n_layers = 10;
+
+//    cylinder.set(WW*c10, HH*c11);
+
+    
+    for (float y = 0; y < n_layers; y+=1.0){
+        for (float x = 0; x< 2.0f*glm::pi<float>(); x+=2.0f*glm::pi<float>()/float(n_sectors)){
+            coneMesh.addVertex(glm::vec3( WW*c10*cos(x)  ,WW*c10*sin(x), y*HH*c11/float(n_layers) ));    // mesh index = x + y*width
+                        // this replicates the pixel array within the camera bitmap...
+            //mainMesh.addColor(ofFloatColor(0,0,0));  // placeholder for colour data, we'll get this from the camera
+            coneMesh.addTexCoord( glm::vec2(float(WW)/n_sectors, float(HH)/n_layers) );
+        }
+    }
+    
+    for (int j = 0; j<n_layers-1; j++) {
+        for (int i=0; i<n_sectors; i++ ) {
+            coneMesh.addIndex( i + n_sectors*j );
+            coneMesh.addIndex( i + n_sectors*(j+1) );
+            coneMesh.addIndex( (i+1)%n_sectors + n_sectors*j );
+
+            coneMesh.addIndex( (i+1)%n_sectors + n_sectors*j );
+            coneMesh.addIndex( i + n_sectors*(j+1) );
+            coneMesh.addIndex( (i+1)%n_sectors + n_sectors*(j+1) );
+
+        }
+    }
+    
+    
+}
+
+void ofApp::updateMesh(){
+    
+}
+
 //--------------------------------------------------------------
 void ofApp::update(){
     
-    
+    updateMesh();
     //updateLightPositions();
-    
+    symmetry_id.setName( symmetryGroupLabel[int(symmetry_id)] );
     
     if (!paused) {
     framenr++;
@@ -578,10 +634,11 @@ void ofApp::draw(){
     //vidGrabber.draw(PADDING,PADDING,WW,HH);
     //ofSetColor(ofColor::red);
     //ofDrawBitmapString("RED", 5+30, 5+30);
+
+    //Draw the pattern framebuffer
     fbo.draw(PADDING,PADDING,DRAW_WW,DRAW_HH);
     fbo.draw(PADDING+DRAW_WW,PADDING,DRAW_WW,DRAW_HH);
 
-    
     
     float spinX = sin(ofGetElapsedTimef()*.05f);
     float spinY = cos(ofGetElapsedTimef()*.045f);
@@ -605,20 +662,23 @@ void ofApp::draw(){
     float screenWidth = ofGetWidth();
     float screenHeight = ofGetHeight();
 
-    cylinder.setPosition(  -screenWidth * .5 + screenWidth *  2/4.f, screenHeight * -1.1/6.f, 0);
+    
+    //cylinder.setPosition(  -screenWidth * .5 + screenWidth *  2/4.f, screenHeight * -1.1/6.f, 0);
     fbo.getTexture().bind();
     
     // Cylinder //
     
-    cylinder.rotateDeg(spinX, 1.0, 0.0, 0.0);
-    cylinder.rotateDeg(spinY, 0, 1.0, 0.0);
+    //cylinder.rotateDeg(spinX, 1.0, 0.0, 0.0);
+    //cylinder.rotateDeg(spinY, 0, 1.0, 0.0);
     
     
         material.begin();
         ofFill();
         
-            cylinder.draw();
+            //cylinder.draw();
         
+        coneMesh.drawFaces();
+    
         material.end();
     fbo.getTexture().unbind();
 
@@ -631,8 +691,8 @@ void ofApp::draw(){
         cam.end();
     //ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
 
-    
-    
+    ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
+    ofDrawBitmapStringHighlight( symmetryGroupLabel[int(symmetry_id)]   , 20, 20 );
     
     //fbo.draw(PADDING,PADDING,WW,HH);
     //feedback.draw(PADDING*2+WW,PADDING,WW,HH);

@@ -80,6 +80,8 @@ void ofApp::setup(){
     
     paused = false;
     mouseDown = false;
+    spin = true;
+    dragXY = glm::vec2(0,0);
     
     gui.setup();
     gui.add(e1length.setup("lattice scale",200,4,600));
@@ -578,7 +580,11 @@ void ofApp::processMidiEvent() {
                 }
                 if(message.control==5){c12=(message.value)/123.0f; updateMesh();}
                 if(message.control==6){c13=(message.value)/63.0f; updateMesh();}
-                if(message.control==7){c14=(message.value-63.0f)/63.0f;}
+                if(message.control==7){
+                    c14=(message.value)/128.0f;
+                    cone.setOrientation(glm::vec3(0,0,360.0*c14));
+                    
+                } // vessel rotation
                 if(message.control==8){c15=(message.value-63.0f)/63.0f;}
                 if(message.control==9){c16=(message.value-63.0f)/63.0f;}
                 if(message.control==10){c17=(message.value-63.0f)/63.0f;}
@@ -745,13 +751,24 @@ void ofApp::draw(){
     fbo.draw(PADDING+DRAW_WW,PADDING,DRAW_WW,DRAW_HH);
 
     
-    float spinX = sin(ofGetElapsedTimef()*.05f);
+    float spinX = 0.0; //sin(ofGetElapsedTimef()*.05f);
     float spinY = cos(ofGetElapsedTimef()*.045f);
-    if (mouseDown) {
+    
+    
+    if (!spin) {
         spinX = spinY = 0.0f;
     }
-
     
+    if (mouseDown) {
+        spinX = spinY = 0.0f;
+        view.setOrientation(glm::vec3(0,0,0));
+        
+        view.rotateDeg(0.5*glm::pi<float>(), 1.0, 0.0, 0.0);
+
+        spinX = 100.0*dragXY.y;
+        spinY = 100.0*dragXY.x;
+    }
+
     cam.setGlobalPosition({ 0,0,cam.getImagePlaneDistance(ofGetCurrentViewport()) });
     cam.begin();
 
@@ -769,14 +786,13 @@ void ofApp::draw(){
 
     
     //cylinder.setPosition(  -screenWidth * .5 + screenWidth *  2/4.f, screenHeight * -1.1/6.f, 0);
-    
     // Cylinder //
     
     view.rotateDeg(spinX, 1.0, 0.0, 0.0);
-    view.rotateDeg(spinY, 0, 1.0, 0.0);
+    view.rotateDeg(spinY, 0  , 1.0, 0.0);
     
-    cylinder.rotateDeg(spinX, 1.0, 0.0, 0.0);
-    cylinder.rotateDeg(spinY, 0, 1.0, 0.0);
+    //cylinder.rotateDeg(spinX, 1.0, 0.0, 0.0);
+    //cylinder.rotateDeg(spinY, 0, 1.0, 0.0);
     
     /*
         fbo.getTexture().bind();
@@ -827,6 +843,8 @@ void ofApp::keyPressed(int key){
         grabScreen();
     } else if (key == ' ') {
         paused = !paused;
+    } else if (key == 's') {
+        spin = !spin;
     } else if (key == 'm' ) {
         processMidiEvents();
         cout << "\n.\n";
@@ -845,17 +863,22 @@ void ofApp::mouseMoved(int x, int y ){
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
+    dragXY = glm::vec2( ((2.0f*float(x)-WW)/WW) ,((2.0f*float(y)-HH)/HH));
+    cout << "test   " << x << " , " << y << " " << dragXY.x << " " << dragXY.y << endl;
 
 }
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
     mouseDown = true;
+    dragXY = glm::vec2( ((2.0f*float(x)-WW)/WW) ,((2.0f*float(y)-HH)/HH));
+
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
     mouseDown = false;
+    dragXY = glm::vec2( 0,0);
 }
 
 //--------------------------------------------------------------

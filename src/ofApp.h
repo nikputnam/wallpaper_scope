@@ -81,6 +81,8 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     unsigned long run_id;
 
     bool paused;
+    bool spin;
+
     bool mouseDown;
     
     ofxFloatSlider e1length;
@@ -113,6 +115,8 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     ofLight pointLight2;
     ofLight pointLight3;
     ofMaterial material;
+
+    glm::vec2 dragXY;
 
     LatticeType symmetryGroupLatticeType[17];
     std::string symmetryGroupLabel[17];

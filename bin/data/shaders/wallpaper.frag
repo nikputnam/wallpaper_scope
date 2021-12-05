@@ -96,7 +96,7 @@ vec3 hsv2rgb(vec3 c)
 
 #define N_SYMMETRIES 12
 #define MATRICES_PER_SYMMETRY 8
-
+#define N_SECTORS_PLUS_ONE 17
 const int sectors[32] = int[32]( 
     8,7,0,0,0,9,0,12,2,0,  // 0 - 9
     3,0,0,0,13,14,5,6,0,0,   // 10-19
@@ -126,7 +126,7 @@ const int sectors[32] = int[32](
 
 const int domains[N_SYMMETRIES]=int[N_SYMMETRIES](4,2,1,2,2,2,4,4,6,4,8,8);
 
-const int domain[N_SYMMETRIES*17] = int[N_SYMMETRIES*17](
+const int domain[N_SYMMETRIES*N_SECTORS_PLUS_ONE] = int[N_SYMMETRIES*N_SECTORS_PLUS_ONE](
     // cmm
     0,
     2,2,3,3,   // 1,2,3,4
@@ -462,7 +462,7 @@ vec2 boxwh = vec2(width,0.0);
 
 
 #define SECTOR(x, y) sectors[int( int(x<y) + 2*int((x+y)<1) + 4*int(x<0.5) + 8*int(y<0.5) + 16*int( ((x+y)<0.5)||((x+y)>1.5)||(x<(y-0.5))||(x>(y+0.5)) )) ]
-#define DOMAIN(g, s ) domain[g*17+SECTOR(s.x,s.y)]
+#define DOMAIN(g, s ) domain[g*N_SECTORS_PLUS_ONE+SECTOR(s.x,s.y)]
 #define DISTANCE(x,y) (min( length(y+boxwh-x) , min( length(x-y), length( x+boxwh-y  ) )))
 
 void main(){

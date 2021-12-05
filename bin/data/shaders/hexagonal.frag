@@ -35,15 +35,21 @@ uniform vec4   skew ;
 
 const mat3 nil           = mat3(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 const mat3 id            = mat3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+
+const mat3 S  = mat3( 0.0, 1.0, 0.0, 1.0,  0.0, 0.0,  0.0,  0.0, 1.0 );
+
+
 const mat3 transMhalf    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, -0.5, -0.5, 1.0 );
 const mat3 transPhalf    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.5,  0.5, 1.0 );
 const mat3 transMhalfX    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, -0.5,  0.0, 1.0 );
 const mat3 transPhalfX    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.5,  0.0, 1.0 );
 const mat3 transMhalfY    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.5, 1.0 );
+const mat3 transM1Y    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.5, 1.0 );
+const mat3 transP1Y    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.5, 1.0 );
+
 const mat3 transPhalfY    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.0,  0.5, 1.0 );
 const mat3 reflectY      = mat3( 1.0, 0.0, 0.0, 0.0, -1.0, 0.0,  0.0,  0.0, 1.0 );
 const mat3 reflectX      = mat3( -1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.0,  0.0, 1.0 );
-const mat3 reflectSlash  = mat3( 0.0, 1.0, 0.0, 1.0,  0.0, 0.0,  0.0,  0.0, 1.0 );
 
 const mat3 transM34Y    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.75, 1.0 );
 const mat3 transM14Y    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.25, 1.0 );
@@ -53,24 +59,15 @@ const mat3 transP14Y    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,  0.25, 1.0 );
 const mat3 transP14X    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.25, 0.0, 1.0 );
 const mat3 transM14X    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.25, 0.0, 1.0 );
 
-const mat3 reflectBSlash =  transPhalf * reflectY * reflectSlash * reflectY * transMhalf ;
-const mat3 rot2          =  transPhalf * reflectY * reflectX * transMhalf ;
+const mat3 rotMt    = mat3( 2.0/sqrt(5.0),  1.0/sqrt(5.0),   0.0,    -1.0/sqrt(5.0), 2.0/sqrt(5.0),   0.0,    0.0, 0.0, 1.0 );
+const mat3 rotPt    = mat3( 2.0/sqrt(5.0), -1.0/sqrt(5.0),   0.0,     1.0/sqrt(5.0), 2.0/sqrt(5.0),   0.0,    0.0, 0.0, 1.0 );
+//const mat3 rotPt    = mat3( 1.0, 0.0,   0.0,    0.0, 1.0,   0.0,    0.0, 0.0, 1.0 );
 
-const mat3 rot14          =  transPhalf * reflectX * reflectSlash * transMhalf ;
-const mat3 rot34          =  transPhalf * reflectY * reflectSlash * transMhalf ;
 
-const mat3 mirrorX       =  transPhalfX * reflectX * transMhalfX ;
-const mat3 mirrorY       =  transPhalfY * reflectY * transMhalfY ;
+const mat3 B =  transPhalf * reflectY * S * reflectY * transMhalf ;
 
-const mat3 glideX        =  transPhalfY * reflectY * transMhalf ;
-const mat3 unglideX      =  transPhalf * reflectY * transMhalfY ;
+const mat3 V =  transP1Y * rotPt * reflectX * rotMt * transM1Y ;
 
-const mat3 glideX34p      =  transP34Y * reflectY * transPhalfX * transM34Y ;
-const mat3 glideX34m      =  transP34Y * reflectY * transMhalfX * transM34Y ;
-const mat3 glideX14p      =  transP14Y * reflectY * transPhalfX * transM14Y ;
-const mat3 glideX14m      =  transP14Y * reflectY * transMhalfX * transM14Y ;
-
-const mat3 reflectBSlashQ = transP14Y * transP14X * reflectY * reflectSlash * reflectY * transM14X * transM14Y ;
 
 //  from https://stackoverflow.com/questions/15095909/from-rgb-to-hsv-in-opengl-glsl  
 //  licence = https://en.wikipedia.org/wiki/WTFPL
@@ -94,363 +91,221 @@ vec3 hsv2rgb(vec3 c)
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
-#define N_SYMMETRIES 12
-#define MATRICES_PER_SYMMETRY 8
+#define N_SYMMETRIES 5
+#define MATRICES_PER_SYMMETRY 12
+#define N_SECTORS_PLUS_ONE 13
 
-const int sectors[32] = int[32]( 
-    8,7,0,0,0,9,0,12,2,0,  // 0 - 9
-    3,0,0,0,13,14,5,6,0,0,   // 10-19
-    0,10,0,11,1,0,4,0,0,0,   // 20-29
-    16,15                     // 30,31
+const int sectors[64] = int[64]( 
+    1,12,0,0,2,0,0,0, //  0 -  7
+    0,0,0,0,0,0,0,0, //  8 - 15
+    0,11,0,0,3,10,4,9, // 16 - 23
+    0,0,0,0,0,0,0,8, // 24 - 31
+    0,0,0,0,0,0,0,0, // 32 - 39
+    0,0,0,0,0,0,0,0, // 40 - 47
+    0,0,0,0,0,0,5,0, // 48 - 55
+    0,0,0,0,0,0,6,7  // 56 - 63
 );
 
-#define CMM 0   //  rhombic  
-#define CM  1   //  rhombic
-#define P1  2   //  oblique
-#define P2  3   //  oblique
-#define PM  4   //  rectangular
-#define PG  5   //  rectangular
-#define PMM 6   //  rectangular
-#define PMG 7   //  rectangular
-#define PGG 8   //  rectangular
-#define P4  9   //  square
-#define P4M  10 //  square
-#define P4G  11 //  square
+//the the other shader for these:
+//#define CMM 0   //  rhombic  
+//#define CM  1   //  rhombic
+//#define P1  2   //  oblique
+//#define P2  3   //  oblique
+//#define PM  4   //  rectangular
+//#define PG  5   //  rectangular
+//#define PMM 6   //  rectangular
+//#define PMG 7   //  rectangular
+//#define PGG 8   //  rectangular
+//#define P4  9   //  square
+//#define P4M  10 //  square
+//#define P4G  11 //  square
 
-//TODO: 
+#define ID_OFFSET 12
+//the hexagonal lattice symetries: 
 #define P3   12 //  hexagonal
 #define P3M1 13 //  hexagonal
 #define P31M 14 //  hexagonal
 #define P6   15 //  hexagonal
 #define P6M  16 //  hexagonal
 
-const int domains[N_SYMMETRIES]=int[N_SYMMETRIES](4,2,1,2,2,2,4,4,6,4,8,8);
+const int domains[N_SYMMETRIES]=int[N_SYMMETRIES](12,12,12,12,12);
 
-const int domain[N_SYMMETRIES*17] = int[N_SYMMETRIES*17](
-    // cmm
+const int domain[N_SYMMETRIES*N_SECTORS_PLUS_ONE] = int[N_SYMMETRIES*N_SECTORS_PLUS_ONE](
+    // p3
     0,
-    2,2,3,3,   // 1,2,3,4
-    2,1,1,2,   // 5,6,7,8
-    1,1,0,0,   // 9,10,11,12
-    3,0,0,3,    // 13,14,15,16
-    //cm
-        0,
-    1,1,1,1,   // 1,2,3,4
-    1,0,0,1,   // 5,6,7,8
-    0,0,0,0,   // 9,10,11,12
-    1,0,0,1,    // 13,14,15,16
+    1,2,3,4,   // 1,2,3,4
+    5,6,7,8,   // 5,6,7,8
+    9,10,11,0,   // 9,10,11,12
 
-    //p1
-        0,
-    0,0,0,0,   // 1,2,3,4
-    0,0,0,0,   // 5,6,7,8
-    0,0,0,0,   // 9,10,11,12
-    0,0,0,0,    // 13,14,15,16
+    //p3m1
+    0,
+    1,2,3,4,   // 1,2,3,4
+    5,6,7,8,   // 5,6,7,8
+    9,10,11,0,   // 9,10,11,12
 
-    //p2
-        0,
-    1,1,1,1,   // 1,2,3,4
-    1,1,1,1,   // 5,6,7,8
-    0,0,0,0,   // 9,10,11,12
-    0,0,0,0,    // 13,14,15,16
+    //p31m
+    0,
+    1,2,3,4,   // 1,2,3,4
+    5,6,7,8,   // 5,6,7,8
+    9,10,11,0,   // 9,10,11,12
 
-        //pm
-        0,
-    1,1,1,1,   // 1,2,3,4
-    1,1,1,1,   // 5,6,7,8
-    0,0,0,0,   // 9,10,11,12
-    0,0,0,0,    // 13,14,15,16
+    //p6
+    0,
+    1,2,3,4,   // 1,2,3,4
+    5,6,7,8,   // 5,6,7,8
+    9,10,11,0,   // 9,10,11,12
 
-            //pg
-        0,
-    1,1,1,1,   // 1,2,3,4
-    1,1,1,1,   // 5,6,7,8
-    0,0,0,0,   // 9,10,11,12
-    0,0,0,0,    // 13,14,15,16
-
-
-            //pmm
-        0,
-    1,1,1,1,   // 1,2,3,4
-    2,2,2,2,   // 5,6,7,8
-    3,3,3,3,   // 9,10,11,12
-    0,0,0,0,    // 13,14,15,16
-
-     //pmg
-        0,
-    1,1,1,1,   // 1,2,3,4
-    2,2,2,2,   // 5,6,7,8
-    3,3,3,3,   // 9,10,11,12
-    0,0,0,0,    // 13,14,15,16
-
-         //pgg
-        0,
-    2,0,0,2,   // 1,2,3,4
-    3,3,1,1,   // 5,6,7,8
-    1,4,4,1,   // 9,10,11,12
-    0,0,5,5,    // 13,14,15,16
-
-    //p4
-       0,
-    1,1,1,1,   // 1,2,3,4
-    2,2,2,2,   // 5,6,7,8
-    3,3,3,3,   // 9,10,11,12
-    0,0,0,0,    // 13,14,15,16
-
-     //p4m
-       0,
-    2,2,1,1,   // 1,2,3,4
-    3,4,4,3,   // 5,6,7,8
-    5,5,6,6,   // 9,10,11,12
-    0,7,7,0,    // 13,14,15,16
-
-      //p4g
-       0,
-    2,2,3,1,   // 1,2,3,4
-    4,4,5,5,   // 5,6,7,8
-    7,6,6,7,   // 9,10,11,12
-    1,1,0,0    // 13,14,15,16
+        //p6m
+    0,
+    1,2,3,4,   // 1,2,3,4
+    5,6,7,8,   // 5,6,7,8
+    9,10,11,0   // 9,10,11,12
 
 );
 
 const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_PER_SYMMETRY]( //id,
-//CMM  (the first 8)
-     id,
-     reflectBSlash,
-     reflectSlash * reflectBSlash,
-     reflectSlash ,
-     nil,
-     nil,
-     nil,
-     nil,
-// CM   (the second 8)
-      id,
-     reflectSlash,
-     nil,
-     nil ,
-     nil,
-     nil,
-     nil,
-     nil,
-// P1  
-      id,
-     nil,
-     nil,
-     nil ,
-     nil,
-     nil,
-     nil,
-     nil,
-// P2  
-      id,
-     rot2,
-     nil,
-     nil ,
-     nil,
-     nil,
-     nil,
-     nil,
+//p3  
+     S*V,       // 12 = 0
+     V*S,       // 1
+     S*V*S*V,   // 2
+     id ,       // 3
+     id ,       // 4
+     B*S*V*S*V*B,       // 5
+     B*S*V*S*B,       // 6
+     B*S*V*B,       // 7
+     B*S*V*B,       // 8
+     id,       // 9 
+     id,       // 10
+     S*V,       // 11
 
-// PM   
-      id,
-     mirrorX,
-     nil,
-     nil ,
-     nil,
-     nil,
-     nil,
-     nil,
+//p3m1  
+     S*V,       // 12 = 0
+     S*V*S,       // 1
+     S*V*S*V,   // 2
+     S ,       // 3
+     S ,       // 4
+     B*S*V*S*V*B,       // 5
+     B*S*V*S*B,       // 6
+     B*S*V*B,       // 7
+     B*V*B,       // 8
+     id,       // 9 
+     id,       // 10
+     V,       // 11
 
-// PG   
-      id,
-     glideX,
-     nil,
-     nil ,
-     nil,
-     nil,
-     nil,
-     nil ,
+     //p31m 
+     S*V,       // 12 = 0
+     V*S,       // 1
+     S*V*S*V,   // 2
+     id ,       // 3
+     B ,       // 4
+     S*V*S*V*B,       // 5
+     S*V*S*B,       // 6
+     S*V*B,       // 7
+     S*V*B,       // 8
+     B,       // 9 
+     id,       // 10
+     S*V,       // 11
 
-     // PMM
-      id,
-     mirrorX,
-     mirrorX * mirrorY,
-     mirrorY ,
-     nil,
-     nil,
-     nil,
-     nil ,
+          //p6 
+     S*V,       // 12 = 0
+     V*S,       // 1
+     S*V*S*V,   // 2
+     id ,       // 3
+     S*B ,       // 4
+     V*S*V*B,       // 5
+     V*S*B,       // 6
+     V*B,       // 7
+     V*B,       // 8
+     S*B,       // 9 
+     id,       // 10
+     S*V,       // 11
 
-
-     // PMG
-      id,
-     glideX * mirrorY,
-     glideX,
-     mirrorY ,
-     nil,
-     nil,
-     nil,
-     nil ,
-
-
-     // PGG
-      id,
-     rot2,
-     glideX14m,
-     rot2*glideX34m ,
-     rot2*glideX34p ,
-     glideX14p,
-     nil,
-     nil ,
-
-        // P4
-      id,
-     rot34,
-     rot2,
-     rot14 ,
-     nil,
-     nil,
-     nil,
-     nil ,
-
-    // P4M
-      id,    // 0
-     rot34 * reflectBSlash,  //1
-     rot34,   //2
-     rot2 * reflectSlash ,  //3
-     rot2,  //4
-     rot14 * reflectBSlash,  //5 
-     rot14,  //6
-     reflectSlash,   //7
-
-         // P4G
-      id,    // 0
-     reflectBSlashQ,  //1
-     rot34,   //2
-     reflectBSlashQ * rot34 ,  //3
-     rot2,  //4
-     reflectBSlashQ * rot2 ,  //5 
-     rot14,  //6
-     reflectSlash * rot14  //7
+          //p6m 
+     V,       // 12 = 0
+     V*S,       // 1
+     V*S*V,   // 2
+     id ,       // 3
+     B ,       // 4
+     V*S*V*B,       // 5
+     V*S*B,       // 6
+     V*B,       // 7
+     S*V*B,       // 8
+     S*B,       // 9 
+     S,       // 10
+     S*V       // 11
 ); 
 
 const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_PER_SYMMETRY](
-    //CMM  (the first 8)
-     id,
-     reflectBSlash,
-     reflectSlash * reflectBSlash,
-     reflectSlash ,
-     nil,
-     nil,
-     nil,
-     nil,
-// CM   (the second 8)
-    id,
-     reflectSlash,
-     nil,
-     nil ,
-     nil,
-     nil,
-     nil,
-     nil,
-// P1   (the second 8)
-      id,
-     nil,
-     nil,
-     nil ,
-     nil,
-     nil,
-     nil,
-     nil,
-// P2   (the second 8)
-      id,
-     rot2,
-     nil,
-     nil ,
-     nil,
-     nil,
-     nil,
-     nil,
+//p3  
+     V*S,       // 12 = 0
+     S*V,       // 1
+     V*S*V*S,   // 2
+     id ,       // 3
+     id ,       // 4
+     B*V*S*V*S*B,       // 5
+     B*S*V*S*B,       // 6
+     B*V*S*B,       // 7
+     B*V*S*B,       // 8
+     id,       // 9 
+     id,       // 10
+     V*S,       // 11
 
-// PM   
-      id,
-     mirrorX,
-     nil,
-     nil ,
-     nil,
-     nil,
-     nil,
-     nil,
-// PG   
-      id,
-     unglideX,
-     nil,
-     nil ,
-     nil,
-     nil,
-     nil,
-     nil,
+// the rest sill need to be flipped
+//p3m1  
+     S*V,       // 12 = 0
+     S*V*S,       // 1
+     S*V*S*V,   // 2
+     S ,       // 3
+     S ,       // 4
+     B*S*V*S*V*B,       // 5
+     B*S*V*S*B,       // 6
+     B*S*V*B,       // 7
+     B*V*B,       // 8
+     id,       // 9 
+     id,       // 10
+     V,       // 11
 
-     // PMM
-      id,
-     mirrorX,
-     mirrorX * mirrorY,
-     mirrorY ,
-     nil,
-     nil,
-     nil,
-     nil , 
-     
+     //p31m 
+     S*V,       // 12 = 0
+     V*S,       // 1
+     S*V*S*V,   // 2
+     id ,       // 3
+     B ,       // 4
+     S*V*S*V*B,       // 5
+     S*V*S*B,       // 6
+     S*V*B,       // 7
+     S*V*B,       // 8
+     B,       // 9 
+     id,       // 10
+     S*V,       // 11
 
-     // PMG
-      id,
-     mirrorY * unglideX,
-     unglideX,
-     mirrorY ,
-     nil,
-     nil,
-     nil,
-     nil ,
+          //p6 
+     S*V,       // 12 = 0
+     V*S,       // 1
+     S*V*S*V,   // 2
+     id ,       // 3
+     S*B ,       // 4
+     V*S*V*B,       // 5
+     V*S*B,       // 6
+     V*B,       // 7
+     V*B,       // 8
+     S*B,       // 9 
+     id,       // 10
+     S*V,       // 11
 
-     // PGG
-      id,
-     rot2,
-     glideX14p,
-     glideX34p*rot2 ,
-     glideX34m*rot2 ,
-     glideX14m,
-     nil,
-     nil ,
-
-      // P4
-      id,
-     rot14,
-     rot2,
-     rot34 ,
-     nil,
-     nil,
-     nil,
-     nil , 
-
-         // P4M
-      id,    // 0
-     reflectBSlash * rot14,  //1
-     rot14,   //2
-     reflectSlash * rot2 ,  //3
-     rot2,  //4
-     reflectBSlash * rot34,  //5 
-     rot34,  //6
-     reflectSlash,   //7
-
-              // P4G
-      id,    // 0
-     reflectBSlashQ,  //1
-     rot14,   //2
-     rot14 * reflectBSlashQ  ,  //3
-     rot2,  //4
-     rot2 * reflectBSlashQ  ,  //5 
-     rot34,  //6
-     rot34 * reflectBSlashQ   //7
+          //p6m 
+     V,       // 12 = 0
+     V*S,       // 1
+     V*S*V,   // 2
+     id ,       // 3
+     B ,       // 4
+     V*S*V*B,       // 5
+     V*S*B,       // 6
+     V*B,       // 7
+     S*V*B,       // 8
+     S*B,       // 9 
+     S,       // 10
+     S*V       // 11
 ); 
                // mat3 M = tD[domain1] * tDinverse[domain0]
 
@@ -461,8 +316,8 @@ const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MAT
 vec2 boxwh = vec2(width,0.0);
 
 
-#define SECTOR(x, y) sectors[int( int(x<y) + 2*int((x+y)<1) + 4*int(x<0.5) + 8*int(y<0.5) + 16*int( ((x+y)<0.5)||((x+y)>1.5)||(x<(y-0.5))||(x>(y+0.5)) )) ]
-#define DOMAIN(g, s ) domain[g*17+SECTOR(s.x,s.y)]
+#define SECTOR(x, y) sectors[int( int(x<y) + 2*int((x+y)>1) + 4*int(y>1.0-2.0*x) + 8*int(y>1.0-0.5*x) + 16*int(y>0.5-0.5*x) + 32*int(y>2.0-2.0*x)) ]
+#define DOMAIN(g, s ) domain[((g-ID_OFFSET)*N_SECTORS_PLUS_ONE)+SECTOR(s.x,s.y)]
 #define DISTANCE(x,y) (min( length(y+boxwh-x) , min( length(x-y), length( x+boxwh-y  ) )))
 
 void main(){
@@ -490,13 +345,13 @@ float y = gl_TexCoord[0].y ;
 vec2 xy =  gl_TexCoord[0].xy;
 //vec2 xy = vec2(width-x,y)  ;
 
-int domain0 = DOMAIN(symmetry_id, fract(xyS) );
+int domain0 = DOMAIN(symmetry_id,fract(xyS));
 
 //vec4 vidColor = texture2DRect(tex0, gl_TexCoord[0].xy);
 vec4 vidColor = mix( texture2DRect(tex0, gl_TexCoord[0].xy)  ,texture2DRect(last_frame, gl_TexCoord[0].xy), mix_f ); // texture2DRect(tex0, xy);
 
 //int lattice_range = 1;
-int n_domains = domains[symmetry_id];
+int n_domains = domains[(symmetry_id-ID_OFFSET)];
 
     //gl_FragColor = vidColor;    
 
@@ -519,9 +374,11 @@ int n_domains = domains[symmetry_id];
         for(int j=-lattice_range;j<=lattice_range;++j) {
             for(int domain1=0;domain1<n_domains;++domain1) {
                 //vec2 new_xy = origin + float(i)*e1 + float(j)*e2 + skewM*( oij + nm );
-                mat3 M = tD[(symmetry_id*MATRICES_PER_SYMMETRY)+domain1] * tDinverse[(symmetry_id*MATRICES_PER_SYMMETRY)+domain0];
+                mat3 M = tD[((symmetry_id-ID_OFFSET)*MATRICES_PER_SYMMETRY)+domain1] * tDinverse[((symmetry_id-ID_OFFSET)*MATRICES_PER_SYMMETRY)+domain0];
                 vec2 new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*( floor(xyS) + vec2( M * vec3( fract(xyS),1.0) )) ;
 //                new_xy = vec2( mod((new_xy.x + width), width ), new_xy.y );
+
+                // torroidal wrapping.  (only should do on x?)
                 new_xy = mod(new_xy + lattice_range*(boxwh+boxwh), boxwh);
                 //float ll = length(new_xy + vec2(50,50) - gl_TexCoord[0].xy);
                 float ll = DISTANCE(new_xy,xy); // length(new_xy  - xy);

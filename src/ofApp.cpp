@@ -34,6 +34,7 @@ float c29=0;
 float c30=0;
 float c31=0;
 
+
 //--------------------------------------------------------------
 void ofApp::setup(){
 
@@ -94,7 +95,7 @@ void ofApp::setup(){
     gui.add(brightness_boost.setup("log brightness boost",0.0,-0.5,0.5));
     gui.add(contrast_boost.setup("log contrast boost",0.0,-3.0,3.0));
     
-    gui.add(symmetry_id.setup("symmetry group",0,0,11));
+    gui.add(symmetry_id.setup("symmetry group",12,0,16));
     gui.add(checkerboard.setup("checker board",false));
     gui.add(intrainversion.setup("intrainversion",false));
 
@@ -137,7 +138,11 @@ void ofApp::setup(){
     
  //   cout << "\n\n\n    ###################################### \n\n\n";
 
-    shader.load("shaders/wallpaper");
+    oblique_lattices.load("shaders/wallpaper");
+    hexagonal_lattices.load("shaders/hexagonal");
+    hex_lattice = true;
+    current_shader = &hexagonal_lattices;
+    
 
     framenr=0;
     run_id = rand();
@@ -313,39 +318,39 @@ void ofApp::setUniforms() {
 
     
     //glm::vec2 mxy = glm::vec2(mouseX-PADDING-PADDING-WW,mouseY-PADDING);
-    shader.setUniform1f("time", t );
-    shader.setUniform2f("mouse", mxy );
+    current_shader->setUniform1f("time", t );
+    current_shader->setUniform2f("mouse", mxy );
     //cout << mxy << " <-- mouse\n";
-    shader.setUniform1f("width",float(WW));
-    shader.setUniform1f("height",float(HH));
-    shader.setUniform1f("mix_f",1.0-exp(float(mix_f)));
+    current_shader->setUniform1f("width",float(WW));
+    current_shader->setUniform1f("height",float(HH));
+    current_shader->setUniform1f("mix_f",1.0-exp(float(mix_f)));
     //cout << "mix " << mix_f << "\t" << log(mix_f) <<"\n";
-    shader.setUniform1f("hue_shift",float(hue_shift));
-    shader.setUniform1f("saturation_boost",sboost);
-    shader.setUniform1f("brightness_boost",bboost);
-    shader.setUniform1f("contrast_boost",cboost);
-    shader.setUniform1f("offset",t * 20.0);
+    current_shader->setUniform1f("hue_shift",float(hue_shift));
+    current_shader->setUniform1f("saturation_boost",sboost);
+    current_shader->setUniform1f("brightness_boost",bboost);
+    current_shader->setUniform1f("contrast_boost",cboost);
+    current_shader->setUniform1f("offset",t * 20.0);
 
-shader.setUniform1i("checkerboard",int(checkerboard));
-shader.setUniform1i("intrainversion",int(intrainversion));
-shader.setUniform1i("post_checkerboard",0);
-shader.setUniform1i("post_intrainversion",0);
+    current_shader->setUniform1i("checkerboard",int(checkerboard));
+    current_shader->setUniform1i("intrainversion",int(intrainversion));
+    current_shader->setUniform1i("post_checkerboard",0);
+    current_shader->setUniform1i("post_intrainversion",0);
 
 
-    shader.setUniform2f("origin",origin);
-    shader.setUniform2f("e1",e1);
-    shader.setUniform2f("e2",e2);
-shader.setUniform1i("symmetry_id",int(symmetry_id));
-shader.setUniform1i("lattice_range",int(lattice_range));
-    shader.setUniform1f("weight_range",weight_range);
+    current_shader->setUniform2f("origin",origin);
+    current_shader->setUniform2f("e1",e1);
+    current_shader->setUniform2f("e2",e2);
+    current_shader->setUniform1i("symmetry_id",int(symmetry_id));
+    current_shader->setUniform1i("lattice_range",int(lattice_range));
+    current_shader->setUniform1f("weight_range",weight_range);
 
     glm::vec4 tmp =glm::vec4( unskew[0][0], unskew[0][1], unskew[1][0], unskew[1][1] ) ;
-    shader.setUniform4f("unskew", tmp );
+    current_shader->setUniform4f("unskew", tmp );
     
     glm::vec4 tmp2 =glm::vec4( skew[0][0], skew[0][1], skew[1][0], skew[1][1] ) ;
-    shader.setUniform4f("skew", tmp2 );
+    current_shader->setUniform4f("skew", tmp2 );
     //shader.setUniformTexture("last_frame", vidGrabber.getTexture(), 0);
-    shader.setUniformTexture("last_frame", feedback.getTexture(), 1); //vidGrabber.getTexture(), 0);
+    current_shader->setUniformTexture("last_frame", feedback.getTexture(), 1); //vidGrabber.getTexture(), 0);
 }
 
 
@@ -454,6 +459,16 @@ void ofApp::initMesh(){
 //--------------------------------------------------------------
 void ofApp::update(){
     
+    
+    if (symmetryGroupLatticeType[symmetry_id] == hexagonal && !hex_lattice) {
+        current_shader = &hexagonal_lattices;
+        hex_lattice = true;
+    } else if (symmetryGroupLatticeType[symmetry_id] != hexagonal && hex_lattice) {
+        current_shader = &oblique_lattices;
+        hex_lattice = false;
+    }
+
+    
     //updateMesh();
     //updateLightPositions();
     symmetry_id.setName( symmetryGroupLabel[int(symmetry_id)] );
@@ -473,14 +488,14 @@ void ofApp::update(){
     
     //for (int i=0; i<int(iterations); i++ ) {
     fbo.begin();
-        shader.begin();
+        current_shader->begin();
         
             setUniforms();
             //shader.setUniform1f("mix_f",i==0 ? exp(float(mix_f)): 0);
 
             vidGrabber.draw(0,0);
         //feedback.draw(0,0);
-        shader.end();
+        current_shader->end();
     fbo.end();
      
         
@@ -492,17 +507,17 @@ void ofApp::update(){
     
     if (post_checkerboard || post_intrainversion) {
         fbo.begin();
-            shader.begin();
+            current_shader->begin();
         
                 setUniforms();
-                shader.setUniform1f("mix_f", 0);
-                shader.setUniform1i("post_checkerboard",int(post_checkerboard));
-                shader.setUniform1i("post_intrainversion",int(post_intrainversion));
-                shader.setUniform1i("lattice_range",0);
+        current_shader->setUniform1f("mix_f", 0);
+        current_shader->setUniform1i("post_checkerboard",int(post_checkerboard));
+        current_shader->setUniform1i("post_intrainversion",int(post_intrainversion));
+        current_shader->setUniform1i("lattice_range",0);
 
                 //vidGrabber.draw(0,0);
                 feedback.draw(0,0);
-            shader.end();
+        current_shader->end();
         fbo.end();
     }
     }

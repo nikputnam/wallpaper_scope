@@ -68,8 +68,11 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
         ofVideoGrabber  vidGrabber;
         ofFbo           fbo;
         ofFbo           feedback;
-        ofShader        shader;
-        
+    ofShader        oblique_lattices;
+    ofShader        hexagonal_lattices;
+    ofShader*        current_shader;
+    bool hex_lattice;
+    
         glm::vec2 e1 ; //(2.f, 2.f);
         glm::vec2 e2 ; //(2.f, 2.f);
         glm::vec2 origin ; //(2.f, 2.f);

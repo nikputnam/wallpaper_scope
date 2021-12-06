@@ -34,6 +34,7 @@ uniform vec4 unskew ;
 uniform vec4   skew ;
 
 const mat3 nil           = mat3(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+const mat3 null           = mat3(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 const mat3 id            = mat3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 
 const mat3 S  = mat3( 0.0, 1.0, 0.0, 1.0,  0.0, 0.0,  0.0,  0.0, 1.0 );
@@ -44,8 +45,8 @@ const mat3 transPhalf    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.5,  0.5, 1.0 )
 const mat3 transMhalfX    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, -0.5,  0.0, 1.0 );
 const mat3 transPhalfX    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.5,  0.0, 1.0 );
 const mat3 transMhalfY    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.5, 1.0 );
-const mat3 transM1Y    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.5, 1.0 );
-const mat3 transP1Y    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.5, 1.0 );
+const mat3 transM1Y    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -1.0, 1.0 );
+const mat3 transP1Y    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,  1.0, 1.0 );
 
 const mat3 transPhalfY    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.0,  0.5, 1.0 );
 const mat3 reflectY      = mat3( 1.0, 0.0, 0.0, 0.0, -1.0, 0.0,  0.0,  0.0, 1.0 );
@@ -63,10 +64,13 @@ const mat3 rotMt    = mat3( 2.0/sqrt(5.0),  1.0/sqrt(5.0),   0.0,    -1.0/sqrt(5
 const mat3 rotPt    = mat3( 2.0/sqrt(5.0), -1.0/sqrt(5.0),   0.0,     1.0/sqrt(5.0), 2.0/sqrt(5.0),   0.0,    0.0, 0.0, 1.0 );
 //const mat3 rotPt    = mat3( 1.0, 0.0,   0.0,    0.0, 1.0,   0.0,    0.0, 0.0, 1.0 );
 
+const mat3 hexSkew    = mat3(  1.0, 0.5, 0.0, 0.0, sqrt(3.0)/2.0, 0.0,    0.0, 0.0, 1.0 );
+const mat3 hexUnSkew    = mat3(  1.0, -1.0/sqrt(3.0), 0.0, 0.0, 2.0/sqrt(3.0), 0.0,    0.0, 0.0, 1.0 );
+
 
 const mat3 B =  transPhalf * reflectY * S * reflectY * transMhalf ;
 
-const mat3 V =  transP1Y * rotPt * reflectX * rotMt * transM1Y ;
+const mat3 V =  hexUnSkew * transPhalfX * reflectX * transMhalfX * hexSkew ;
 
 
 //  from https://stackoverflow.com/questions/15095909/from-rgb-to-hsv-in-opengl-glsl  
@@ -165,18 +169,18 @@ const int domain[N_SYMMETRIES*N_SECTORS_PLUS_ONE] = int[N_SYMMETRIES*N_SECTORS_P
 
 const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_PER_SYMMETRY]( //id,
 //p3  
-     S*V,       // 12 = 0
-     V*S,       // 1
-     S*V*S*V,   // 2
+     V,       // 12 = 0
+     null, // V*S,       // 1
+     null, // S*V*S*V,   // 2
      id ,       // 3
      id ,       // 4
-     B*S*V*S*V*B,       // 5
-     B*S*V*S*B,       // 6
-     B*S*V*B,       // 7
-     B*S*V*B,       // 8
+     null, // B*S*V*S*V*B,       // 5
+     null, // B*S*V*S*B,       // 6
+     null, // B*S*V*B,       // 7
+     null, // B*S*V*B,       // 8
      id,       // 9 
      id,       // 10
-     S*V,       // 11
+     null, // S*V,       // 11
 
 //p3m1  
      S*V,       // 12 = 0
@@ -237,18 +241,18 @@ const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_P
 
 const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_PER_SYMMETRY](
 //p3  
-     V*S,       // 12 = 0
-     S*V,       // 1
-     V*S*V*S,   // 2
+     V,       // 12 = 0
+     null, // S*V,       // 1
+     null, // V*S*V*S,   // 2
      id ,       // 3
      id ,       // 4
-     B*V*S*V*S*B,       // 5
-     B*S*V*S*B,       // 6
-     B*V*S*B,       // 7
-     B*V*S*B,       // 8
+     null, // B*V*S*V*S*B,       // 5
+     null, // B*S*V*S*B,       // 6
+     null, // B*V*S*B,       // 7
+     null, // B*V*S*B,       // 8
      id,       // 9 
      id,       // 10
-     V*S,       // 11
+     null, // V*S,       // 11
 
 // the rest sill need to be flipped
 //p3m1  
@@ -397,7 +401,9 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
                 
                 vec4 lattice_vidColor = mix( texture2DRect(tex0, new_xy)  ,texture2DRect(last_frame, new_xy), mix_f ); // texture2DRect(tex0, xy);
                 
-                if ( (ll_mouse2<6.0)  )  {lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb;} // { averaged_vidcolor = 1.0-averaged_vidcolor; }
+                //if ( (ll_mouse2<6.0)  )  {lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb;} // { averaged_vidcolor = 1.0-averaged_vidcolor; }
+                
+                if ( (ll_mouse2<6.0)  )  {lattice_vidColor.rgb = vec3(1.0,0,0) ;} // { averaged_vidcolor = 1.0-averaged_vidcolor; }
 
                 if ((checkerboard==1) && (mod(i+j,2)==1))               { lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; }
                 if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; }
@@ -412,7 +418,9 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
         }   
     }
 
+
     averaged_vidcolor  = averaged_vidcolor * (1.0 / averaged_vidcolor.a );
+
     vec3 rgb1 = averaged_vidcolor.rgb;
     vec3 hsv1 = rgb2hsv(rgb1);
     //vec3 hsv2  = vec3( fract(hsv1.x+0.5*time+hue_shift), hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,clamp( brightness_boost* hsv1.z,0,1)) : hsv1.z ) ;
@@ -441,7 +449,9 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
     if ((post_intrainversion==1) && (mod(domain0,2)==1)) { rgb2 = vec3(1.0) - rgb2; }
 
 
-    gl_FragColor = vec4(rgb2,1.0) ; // 
+    gl_FragColor = vec4(rgb2,1.0) ; //
+
+    if (domain0==1) { gl_FragColor = vec4(vec3(0.0),1.0); };
 
 /*
     // hilight the corrent cell and domain...

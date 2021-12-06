@@ -529,7 +529,9 @@ int n_domains = domains[symmetry_id];
                 mat3 M = tD[(symmetry_id*MATRICES_PER_SYMMETRY)+domain1] * tDinverse[(symmetry_id*MATRICES_PER_SYMMETRY)+domain0];
                 vec2 new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*( floor(xyS) + vec2( M * vec3( fract(xyS),1.0) )) ;
 //                new_xy = vec2( mod((new_xy.x + width), width ), new_xy.y );
-                new_xy = mod(new_xy + lattice_range*(boxwh+boxwh), boxwh);
+                //new_xy = mod(new_xy + lattice_range*(boxwh+boxwh), boxwh);
+                new_xy.x = mod(new_xy.x + lattice_range*boxwh.x, boxwh.x);
+
                 //float ll = length(new_xy + vec2(50,50) - gl_TexCoord[0].xy);
                 float ll = DISTANCE(new_xy,xy); // length(new_xy  - xy);
                 float ll_mouse2 = DISTANCE(new_xy, mouse); //length(new_xy  - mouse);
@@ -547,7 +549,7 @@ int n_domains = domains[symmetry_id];
                 
                 vec4 lattice_vidColor = mix( texture2DRect(tex0, new_xy)  ,texture2DRect(last_frame, new_xy), mix_f ); // texture2DRect(tex0, xy);
                 
-                if ( (ll_mouse2<6.0)  )  {lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb;} // { averaged_vidcolor = 1.0-averaged_vidcolor; }
+                if ( (ll_mouse2<3.0)  )  {lattice_vidColor.rgb = vec3(1.0,0,0) ; w=100.0;}  // { averaged_vidcolor = 1.0-averaged_vidcolor; }
 
                 if ((checkerboard==1) && (mod(i+j,2)==1))               { lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; }
                 if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; }

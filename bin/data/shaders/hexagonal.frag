@@ -133,32 +133,32 @@ const int sectors[64] = int[64](
 #define P6   15 //  hexagonal
 #define P6M  16 //  hexagonal
 
-const int domains[N_SYMMETRIES]=int[N_SYMMETRIES](12,12,12,12,12);
+const int domains[N_SYMMETRIES]=int[N_SYMMETRIES](3,6,6,6,12);
 
 const int domain[N_SYMMETRIES*N_SECTORS_PLUS_ONE] = int[N_SYMMETRIES*N_SECTORS_PLUS_ONE](
     // p3
     0,
-    1,2,3,4,   // 1,2,3,4
-    5,6,7,8,   // 5,6,7,8
-    9,10,11,0,   // 9,10,11,12
+    1,1,0,0,   // 1,2,3,4
+    2,2,1,1,   // 5,6,7,8
+    0,0,2,2,   // 9,10,11,12
 
     //p3m1
     0,
-    1,2,3,4,   // 1,2,3,4
-    5,6,7,8,   // 5,6,7,8
-    9,10,11,0,   // 9,10,11,12
+    2,3,1,1,   // 1,2,3,4
+    4,5,3,2,   // 5,6,7,8
+    0,0,5,4,   // 9,10,11,12
 
     //p31m
     0,
-    1,2,3,4,   // 1,2,3,4
-    5,6,7,8,   // 5,6,7,8
-    9,10,11,0,   // 9,10,11,12
+    0,0,1,3,   // 1,2,3,4
+    4,4,5,5,   // 5,6,7,8
+    3,1,2,2,   // 9,10,11,12
 
     //p6
     0,
-    1,2,3,4,   // 1,2,3,4
-    5,6,7,8,   // 5,6,7,8
-    9,10,11,0,   // 9,10,11,12
+    0,0,1,3,   // 1,2,3,4
+    4,4,5,5,   // 5,6,7,8
+    3,1,2,2,   // 9,10,11,12
 
         //p6m
     0,
@@ -170,60 +170,60 @@ const int domain[N_SYMMETRIES*N_SECTORS_PLUS_ONE] = int[N_SYMMETRIES*N_SECTORS_P
 
 const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_PER_SYMMETRY]( //id,
 //p3  
-     S*V,       // 12 = 0
+     id,        // 0
      V*S,       // 1
-     S*V*S*V,   // 2
-     id ,       // 3
-     id ,       // 4
-     B*S*V*S*V*B,       // 5 
-     B*S*V*S*B,       // 6
-     B*S*V*B,       // 7
-     B*S*V*B,       // 8
-     id,       // 9 
-     id,       // 10
-     S*V,       // 11
+     S*V,   // 2
+     null, // id ,       // 3
+     null, //id ,       // 4
+     null, //B*S*V*S*V*B,       // 5 
+     null, //B*S*V*S*B,       // 6
+     null, //B*S*V*B,       // 7
+     null, //B*S*V*B,       // 8
+     null, //id,       // 9 
+     null, //id,       // 10
+     null,       // 11
 
 //p3m1  
-     S*V,       // 12 = 0
-     S*V*S,       // 1
-     S*V*S*V,   // 2
-     S ,       // 3
-     S ,       // 4
-     B*S*V*S*V*B,       // 5
-     B*S*V*S*B,       // 6
-     B*S*V*B,       // 7
-     B*V*B,       // 8
-     id,       // 9 
-     id,       // 10
-     V,       // 11
+     id,       // 12 = 0
+     S,       // 1
+     S*V*S,   // 2
+     S*V*S*V ,       // 3
+     S*V ,       // 4
+     V,       // 5
+     null, //B*S*V*S*B,       // 6
+     null, //B*S*V*B,       // 7
+     null, //B*V*B,       // 8
+     null, //id,       // 9 
+     null, //id,       // 10
+     null, //V,       // 11
 
      //p31m 
-     S*V,       // 12 = 0
-     V*S,       // 1
-     S*V*S*V,   // 2
-     id ,       // 3
+     id,       // 12 = 0
+     V*S*V*S,       // 1
+     V*S,   // 2
+     V*S*V*S*B ,       // 3
      B ,       // 4
-     S*V*S*V*B,       // 5
-     S*V*S*B,       // 6
-     S*V*B,       // 7
-     S*V*B,       // 8
-     B,       // 9 
-     id,       // 10
-     S*V,       // 11
+     V*S*B,       // 5
+     null, //B*S*V*S*B,       // 6
+     null, //B*S*V*B,       // 7
+     null, //B*V*B,       // 8
+     null, //id,       // 9 
+     null, //id,       // 10
+     null, //V,       // 11
 
           //p6 
-     S*V,       // 12 = 0
-     V*S,       // 1
-     S*V*S*V,   // 2
-     id ,       // 3
-     S*B ,       // 4
-     V*S*V*B,       // 5
-     V*S*B,       // 6
-     V*B,       // 7
-     V*B,       // 8
-     S*B,       // 9 
-     id,       // 10
-     S*V,       // 11
+     id,       // 12 = 0
+     V*S*V*S,       // 1
+     V*S,   // 2
+     V*S*V*B ,       // 3
+     V*B ,       // 4
+     V*S*V*S*V*B,       // 5
+     null, //B*S*V*S*B,       // 6
+     null, //B*S*V*B,       // 7
+     null, //B*V*B,       // 8
+     null, //id,       // 9 
+     null, //id,       // 10
+     null, //V,       // 11
 
           //p6m 
      V,       // 12 = 0
@@ -242,75 +242,75 @@ const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_P
 
 const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_PER_SYMMETRY](
 //p3  
-     V*S, // V,       // 12 = 0
+     id,        // 0
      S*V,       // 1
-    V*S*V*S,   // 2
-     id ,       // 3
-     id ,       // 4
-     B*V*S*V*S*B,       // 5
-     B*S*V*S*B,       // 6
-     B*V*S*B,       // 7
-     B*V*S*B,       // 8
-     id,       // 9 
-     id,       // 10
-     V*S,       // 11
+     V*S,   // 2
+     null, // id ,       // 3
+     null, //id ,       // 4
+     null, //B*S*V*S*V*B,       // 5 
+     null, //B*S*V*S*B,       // 6
+     null, //B*S*V*B,       // 7
+     null, //B*S*V*B,       // 8
+     null, //id,       // 9 
+     null, //id,       // 10
+     null,       // 11
 
 // the rest sill need to be flipped
 //p3m1  
-     S*V,       // 12 = 0
-     S*V*S,       // 1
-     S*V*S*V,   // 2
-     S ,       // 3
-     S ,       // 4
-     B*S*V*S*V*B,       // 5
-     B*S*V*S*B,       // 6
-     B*S*V*B,       // 7
-     B*V*B,       // 8
-     id,       // 9 
-     id,       // 10
-     V,       // 11
+     id,       // 12 = 0
+     S,       // 1
+     S*V*S,   // 2
+     V*S*V*S ,       // 3
+     V*S ,       // 4
+     V,       // 5
+     null, //B*S*V*S*B,       // 6
+     null, //B*S*V*B,       // 7
+     null, //B*V*B,       // 8
+     null, //id,       // 9 
+     null, //id,       // 10
+     null, //V,       // 11
 
      //p31m 
-     S*V,       // 12 = 0
-     V*S,       // 1
-     S*V*S*V,   // 2
-     id ,       // 3
+     id,       // 12 = 0
+     S*V*S*V,       // 1
+     S*V,   // 2
+     B*S*V*S*V ,       // 3
      B ,       // 4
-     S*V*S*V*B,       // 5
-     S*V*S*B,       // 6
-     S*V*B,       // 7
-     S*V*B,       // 8
-     B,       // 9 
-     id,       // 10
-     S*V,       // 11
+    B*S*V,       // 5
+     null, //B*S*V*S*B,       // 6
+     null, //B*S*V*B,       // 7
+     null, //B*V*B,       // 8
+     null, //id,       // 9 
+     null, //id,       // 10
+     null, //V,       // 11
 
           //p6 
-     S*V,       // 12 = 0
-     V*S,       // 1
-     S*V*S*V,   // 2
-     id ,       // 3
-     S*B ,       // 4
-     V*S*V*B,       // 5
-     V*S*B,       // 6
-     V*B,       // 7
-     V*B,       // 8
-     S*B,       // 9 
-     id,       // 10
-     S*V,       // 11
+        id,       // 12 = 0
+     S*V*S*V,       // 1
+     S*V,   // 2
+     B*V*S*V ,       // 3
+     B*V ,       // 4
+     B*V*S*V*S*V,       // 5
+     null, //B*S*V*S*B,       // 6
+     null, //B*S*V*B,       // 7
+     null, //B*V*B,       // 8
+     null, //id,       // 9 
+     null, //id,       // 10
+     null, //V,       // 11
 
           //p6m 
      V,       // 12 = 0
-     V*S,       // 1
+     S*V,       // 1
      V*S*V,   // 2
      id ,       // 3
      B ,       // 4
-     V*S*V*B,       // 5
-     V*S*B,       // 6
-     V*B,       // 7
-     S*V*B,       // 8
-     S*B,       // 9 
+     B*V*S*V,       // 5
+     B*S*V,       // 6
+     B*V,       // 7
+     B*V*S,       // 8
+     B*S,       // 9 
      S,       // 10
-     S*V       // 11
+     V*S       // 11
 ); 
                // mat3 M = tD[domain1] * tDinverse[domain0]
 
@@ -391,8 +391,8 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
                 vec2 new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*( floor(xyS) + vec2( M * vec3( fract(xyS),1.0) )) ;
 //                new_xy = vec2( mod((new_xy.x + width), width ), new_xy.y );
 
-                // torroidal wrapping.  (only should do on x?)  TODO
-                new_xy = mod(new_xy + lattice_range*(boxwh+boxwh), boxwh);
+                // cylindrical wrapping
+                new_xy.x = mod(new_xy.x + lattice_range*boxwh.x, boxwh.x);
                 //float ll = length(new_xy + vec2(50,50) - gl_TexCoord[0].xy);
                 float ll = DISTANCE(new_xy,xy); // length(new_xy  - xy);
                 float ll_mouse2 = DISTANCE(new_xy, mouse); //length(new_xy  - mouse);

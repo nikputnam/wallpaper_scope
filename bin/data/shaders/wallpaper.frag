@@ -489,8 +489,15 @@ float x = gl_TexCoord[0].x ;
 float y = gl_TexCoord[0].y ;
 vec2 xy =  gl_TexCoord[0].xy;
 //vec2 xy = vec2(width-x,y)  ;
+vec2 fractXY = fract(xyS);
 
 int domain0 = DOMAIN(symmetry_id, fract(xyS) );
+int sector0 = SECTOR(fractXY.x, fractXY.y);
+ 
+if ( sector0 == 0 ) {  // for debugging:  signals an error;
+    gl_FragColor = vec4(1.0,0,0,1.0);
+
+} else { 
 
 //vec4 vidColor = texture2DRect(tex0, gl_TexCoord[0].xy);
 vec4 vidColor = mix( texture2DRect(tex0, gl_TexCoord[0].xy)  ,texture2DRect(last_frame, gl_TexCoord[0].xy), mix_f ); // texture2DRect(tex0, xy);
@@ -585,7 +592,7 @@ int n_domains = domains[symmetry_id];
 
 
     gl_FragColor = vec4(rgb2,1.0) ; // 
-
+}
 /*
     // hilight the corrent cell and domain...
     if ( (oij == floor(mouseS) )  ) { 

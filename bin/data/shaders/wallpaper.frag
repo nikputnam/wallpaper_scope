@@ -124,7 +124,7 @@ const int sectors[32] = int[32](
 #define P6   15 //  hexagonal
 #define P6M  16 //  hexagonal
 
-const int domains[N_SYMMETRIES]=int[N_SYMMETRIES](4,2,1,2,2,2,4,4,6,4,8,8);
+const int domains[N_SYMMETRIES]=int[N_SYMMETRIES](4,2,1,2,2,2,4,4,4,4,8,8);
 
 const int domain[N_SYMMETRIES*N_SECTORS_PLUS_ONE] = int[N_SYMMETRIES*N_SECTORS_PLUS_ONE](
     // cmm
@@ -187,8 +187,8 @@ const int domain[N_SYMMETRIES*N_SECTORS_PLUS_ONE] = int[N_SYMMETRIES*N_SECTORS_P
         0,
     2,0,0,2,   // 1,2,3,4
     3,3,1,1,   // 5,6,7,8
-    1,4,4,1,   // 9,10,11,12
-    0,0,5,5,    // 13,14,15,16
+    1,3,3,1,   // 9,10,11,12
+    0,0,2,2,    // 13,14,15,16
 
     //p4
        0,
@@ -297,9 +297,9 @@ const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_P
       id,
      rot2,
      glideX14m,
-     rot2*glideX34m ,
-     rot2*glideX34p ,
-     glideX14p,
+     rot2 * glideX34p ,
+     nil, // rot2*glideX34p ,
+     nil, // glideX14p,
      nil,
      nil ,
 
@@ -413,12 +413,12 @@ const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MAT
      nil ,
 
      // PGG
-      id,
+        id,
      rot2,
      glideX14p,
-     glideX34p*rot2 ,
-     glideX34m*rot2 ,
-     glideX14m,
+     glideX34m * rot2 ,
+     nil, // rot2*glideX34p ,
+     nil, // glideX14p,
      nil,
      nil ,
 

@@ -564,7 +564,11 @@ void ofApp::processMidiEvent() {
                     lattice_aspect_ratio = c7;
                 }
                 if(message.control==21){c8=(message.value-63.0f)/63.0f;}
-                if(message.control==22){c9=(message.value-63.0f)/63.0f;}
+                if(message.control==22){
+                    c9=(message.value)/129.0f;
+                    
+                    symmetry_id = int( 17*c9 );
+                }
                 
                 if(message.control==3){
                     c10=(message.value)/128.0f;

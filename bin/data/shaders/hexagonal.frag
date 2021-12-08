@@ -17,6 +17,10 @@ uniform float hue_shift;
 uniform float saturation_boost;
 uniform float brightness_boost;
 uniform float contrast_boost;
+
+uniform float value_b;
+uniform float value_m;
+
 uniform int lattice_range;
 uniform int symmetry_id;
 uniform float weight_range;
@@ -94,6 +98,10 @@ vec3 hsv2rgb(vec3 c)
     vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
     vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+
+float luma(vec3 c) {
+    return (0.2126*c.r + 0.7152*c.g + 0.0722*c.b);
 }
 
 #define N_SYMMETRIES 5
@@ -416,10 +424,14 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
 
                 if ((checkerboard==1) && (mod(i+j,2)==1))               { lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; }
                 if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; }
+                
                 averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*lattice_vidColor.rgb ;
-                averaged_vidcolor.a = averaged_vidcolor.a + w*1.0 ;
+                averaged_vidcolor.a = averaged_vidcolor.a + w ;
 
-                //float lla = length(gl_TexCoord[0].xy - new_xy );
+//                averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(1.0-luma(averaged_vidcolor.rgb))*lattice_vidColor.rgb ;
+//                averaged_vidcolor.a = averaged_vidcolor.a + w*(1.0-luma(averaged_vidcolor.rgb))*1.0 ;
+
+//float lla = length(gl_TexCoord[0].xy - new_xy );
                 //if ( (ll_mouse2<3.0) && (ll_mouse3 < weight_range) ) { averaged_vidcolor = vec4(1.0); }
                 //
 
@@ -434,15 +446,19 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
     vec3 hsv1 = rgb2hsv(rgb1);
     //vec3 hsv2  = vec3( fract(hsv1.x+0.5*time+hue_shift), hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,clamp( brightness_boost* hsv1.z,0,1)) : hsv1.z ) ;
 
-    hsv1  = vec3( hsv1.x, hsv1.y, clamp( brightness_boost*hsv1.z, 0,1)  ) ;
+    hsv1  = vec3( hsv1.x, hsv1.y, clamp( brightness_boost + hsv1.z, 0,1)  ) ;
     hsv1  = vec3( hsv1.x, clamp( saturation_boost* hsv1.y,0,1), hsv1.z  ) ;
 
     // make value more extreme for low saturation pixels
-    vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,0.5+clamp( contrast_boost* (hsv1.z-0.5),-0.5,0.5)) : hsv1.z ) ;    
+    //vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,0.5+clamp( contrast_boost* (hsv1.z-0.5),-0.5,0.5)) : hsv1.z ) ;    
 
 
     //make value more extreme 
     //vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y,  smoothstep(0,1,0.5+clamp( contrast_boost* (hsv1.z-0.5),-0.5,0.5))  ) ;    
+
+    //vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y,  clamp( 0.5 + value_m*(hsv1.z-0.5+value_b) ,0.0,1.0)  ) ;    
+vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y,  clamp(  smoothstep( value_m , value_b, hsv1.z )  ,0.0,1.0)  ) ;    
+
 
    // hsv2  = vec3( hsv2.x, clamp( 3.0* smoothstep(-1.0,1.0, hsv2.y),0,1), hsv1.z  ) ;
    // hsv2  = vec3( hsv2.x, clamp( 3.0* smoothstep(-1.0,1.0, hsv2.y),0,1), hsv1.z  ) ;

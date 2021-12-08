@@ -67,11 +67,20 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
 		
         ofVideoGrabber  vidGrabber;
         ofFbo           fbo;
-        ofFbo           feedback;
+    ofFbo           feedback;
+    ofFbo           filter;
+    
+    ofShader        luma_scale;
+    
+    ofShader        camera_filter;
     ofShader        oblique_lattices;
     ofShader        hexagonal_lattices;
     ofShader*        current_shader;
     bool hex_lattice;
+    unsigned long framecount;
+    
+    long* counts ;
+    unsigned char* pixels ;
     
         glm::vec2 e1 ; //(2.f, 2.f);
         glm::vec2 e2 ; //(2.f, 2.f);
@@ -95,6 +104,10 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     ofxFloatSlider hue_shift;
     ofxFloatSlider saturation_boost;
     
+    ofxFloatSlider value_b;
+    ofxFloatSlider value_m;
+
+    
     ofxToggle checkerboard;
     ofxToggle intrainversion;
     ofxToggle post_checkerboard;
@@ -102,6 +115,12 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
 
     ofxFloatSlider brightness_boost;
     ofxFloatSlider contrast_boost;
+    
+    ofxFloatSlider cam_contrast;
+    ofxFloatSlider cam_brightness;
+    ofxFloatSlider cam_saturation;
+    ofxFloatSlider cam_hue;
+    
     ofxFloatSlider weight_range;
     ofxFloatSlider mix_f;
     ofxIntSlider iterations;
@@ -135,7 +154,7 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     void updateLightPositions();
     void initMesh();
     void updateMesh();
-
+    void imageHistogram();
     //MIDI
     void newMidiMessage(ofxMidiMessage& eventArgs);
     

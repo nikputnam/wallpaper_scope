@@ -1,6 +1,8 @@
 #include "ofApp.h"
 #define STRINGIFY(A) #A
 
+#define NBINS 256
+
 //variables for the midi controllers
 float c1=0;
 float c2=0;
@@ -78,7 +80,10 @@ void ofApp::setup(){
     //mix_f = -5.0;
     
     //
-    
+    framecount = 0;
+    counts = new long[NBINS+1];
+    pixels = new unsigned char[WW*HH*3];  ;
+
     paused = false;
     mouseDown = false;
     spin = true;
@@ -92,9 +97,12 @@ void ofApp::setup(){
     gui.add(lattice_rotation.setup("lattice rotation",0,0,glm::pi<float>()));
     gui.add(lattice_angle.setup("lattice angle",glm::pi<float>()/3.0,0,glm::pi<float>()));
     gui.add(saturation_boost.setup("log saturation boost",0.0,-3.0,3.0));
-    gui.add(brightness_boost.setup("log brightness boost",0.0,-0.5,0.5));
+    gui.add(brightness_boost.setup("log brightness boost",0.0,-0.7,0.7));
     gui.add(contrast_boost.setup("log contrast boost",0.0,-3.0,3.0));
     
+    gui.add(value_b.setup("value_b",1.0,0.0,1.0));
+    gui.add(value_m.setup("value_m",0.0,0.0,1.0));
+
     gui.add(symmetry_id.setup("symmetry group",12,0,16));
     gui.add(checkerboard.setup("checker board",false));
     gui.add(intrainversion.setup("intrainversion",false));
@@ -107,6 +115,17 @@ void ofApp::setup(){
     gui.add(post_checkerboard.setup("post checker board",false));
     gui.add(post_intrainversion.setup("post intrainversion",false));
 
+    
+    gui.add(cam_contrast.setup(   "cam contrast",0.0,-3.0,3.0));
+    gui.add(cam_brightness.setup( "cam brightness",0.0,-3.0,3.0));
+    gui.add(cam_saturation.setup( "cam saturation",0.0,-3.0,3.0));
+    gui.add(cam_hue.setup(        "cam hue",0.0,-3.0,3.0));
+
+//    ofxFloatSlider cam_contrast;
+//    ofxFloatSlider cam_brightness;
+//    ofxFloatSlider cam_saturation;
+ //   ofxFloatSlider cam_hue;
+    
     //saturation_boost = 1.0;
     //iterations = 3;
     //lattice_range=1;
@@ -122,7 +141,12 @@ void ofApp::setup(){
 
     
     fbo.allocate(camWidth,camHeight);
+    filter.allocate(camWidth,camHeight);
     feedback.allocate(camWidth,camHeight);
+
+    filter.begin();
+    ofClear(0,0,0,255);
+    filter.end();
 
     fbo.begin();
     ofClear(0,0,0,255);
@@ -137,13 +161,15 @@ void ofApp::setup(){
 
     
  //   cout << "\n\n\n    ###################################### \n\n\n";
+    camera_filter.load("shaders/imadj");
+    
+    luma_scale.load("shaders/luma_scale");
 
     oblique_lattices.load("shaders/wallpaper");
     hexagonal_lattices.load("shaders/hexagonal");
     hex_lattice = true;
     current_shader = &hexagonal_lattices;
     
-
     framenr=0;
     run_id = rand();
     /*
@@ -313,9 +339,19 @@ void ofApp::setUniforms() {
 */
 
     float sboost = exp( saturation_boost );
-    float bboost = exp( brightness_boost );
+    
+  //  brightness_boost = brightness_boost.getMin() + (message.value/127.0f)*(brightness_boost.getMax()-brightness_boost.getMin()); }
+    
+    float bboost = brightness_boost >= 0.0 ? exp( brightness_boost )-1.0 : -exp( -brightness_boost )+1.0 ;
     float cboost = exp( contrast_boost );
 
+    //    ofxFloatSlider cam_contrast;
+    //    ofxFloatSlider cam_brightness;
+    //    ofxFloatSlider cam_saturation;
+     //   ofxFloatSlider cam_hue;
+    //camera_filter.
+    
+    
     
     //glm::vec2 mxy = glm::vec2(mouseX-PADDING-PADDING-WW,mouseY-PADDING);
     current_shader->setUniform1f("time", t );
@@ -330,6 +366,9 @@ void ofApp::setUniforms() {
     current_shader->setUniform1f("brightness_boost",bboost);
     current_shader->setUniform1f("contrast_boost",cboost);
     current_shader->setUniform1f("offset",t * 20.0);
+
+    current_shader->setUniform1f("value_b",value_b);
+    current_shader->setUniform1f("value_m",value_m);
 
     current_shader->setUniform1i("checkerboard",int(checkerboard));
     current_shader->setUniform1i("intrainversion",int(intrainversion));
@@ -485,24 +524,44 @@ void ofApp::update(){
     vidGrabber.draw(0,0);
     feedback.end();
 */
-    
+
+
+    filter.begin();
+        camera_filter.begin();
+        
+            //cout << "cam hue shift " << exp( float( cam_hue ) )  << endl;
+            //cout << "cam saturation_boost shift " << exp( float( cam_saturation ) )  << endl;
+            //cout << "cam brightness_boost shift " << exp( float( cam_brightness ) )  << endl;
+            //cout << "cam contrast_boost shift " << exp( float( cam_contrast ) )  << endl;
+            camera_filter.setUniform1f("hue_shift",       float(exp( float( cam_hue ) )) );
+            camera_filter.setUniform1f("saturation_boost",float(exp( float( cam_saturation ) )) );
+            camera_filter.setUniform1f("brightness_boost",float(exp( float( cam_brightness ) )) );
+            camera_filter.setUniform1f("contrast_boost",float(exp( float( cam_contrast ) ) ));
+            vidGrabber.draw(0,0);
+
+        camera_filter.end();
+    filter.end();
+        
     //for (int i=0; i<int(iterations); i++ ) {
     fbo.begin();
         current_shader->begin();
-        
             setUniforms();
-            //shader.setUniform1f("mix_f",i==0 ? exp(float(mix_f)): 0);
-
-            vidGrabber.draw(0,0);
-        //feedback.draw(0,0);
+            filter.draw(0,0);
         current_shader->end();
     fbo.end();
      
         
-    feedback.begin();
-        fbo.draw(0,0);
-    feedback.end();
+    
      
+        if (framecount == 1) {
+            imageHistogram();
+            framecount = 0;
+        } else {
+            feedback.begin();
+                fbo.draw(0,0);
+            feedback.end();
+        }
+        framecount += 1;
     //}
     
     if (post_checkerboard || post_intrainversion) {
@@ -563,7 +622,17 @@ void ofApp::processMidiEvent() {
                     c7=(message.value)/64.0f;
                     lattice_aspect_ratio = c7;
                 }
-                if(message.control==21){c8=(message.value-63.0f)/63.0f;}
+                
+                if(message.control==21){
+                    //c8=(message.value-63.0f)/63.0f;
+                    value_m = value_m.getMin() +(message.value/127.0f)*(value_m.getMax()-value_m.getMin());
+                }
+                
+                if(message.control==10){
+                    //c8=(message.value-63.0f)/63.0f;
+                    value_b = value_b.getMin() +(message.value/127.0f)*(value_b.getMax()-value_b.getMin());
+                }
+                
                 if(message.control==22){
                     c9=(message.value)/129.0f;
                     
@@ -606,7 +675,7 @@ void ofApp::processMidiEvent() {
                 } // vessel rotation
                 if(message.control==8){c15=(message.value-63.0f)/63.0f;}
                 if(message.control==9){c16=(message.value-63.0f)/63.0f;}
-                if(message.control==10){c17=(message.value-63.0f)/63.0f;}
+               // if(message.control==10){c17=(message.value-63.0f)/63.0f;}
                 if(message.control==11){c18=(message.value-63.0f)/63.0f;}
             }
         }
@@ -734,6 +803,76 @@ void ofApp::listMidiEventQueue() {
     }
 }
 
+void ofApp::imageHistogram() {
+    //cout << "do the histogram thing" << endl;
+    int w = WW;
+    int h = HH;
+    
+  //  long* counts = new long[NBINS+1];
+  //  unsigned char* pixels = new unsigned char[w*h*3];  ;
+    fbo.begin();
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    fbo.end();
+
+
+    long totalC = 0;
+    
+    for (int i =0; i<=NBINS; i++) {counts[i]=0;}
+    
+    for (int i = 0; i<w*h*3 ; i+=3*31 ) {
+        auto r = float(pixels[i]);
+        auto g = float(pixels[i+1]);
+        auto b = float(pixels[i+2]);
+        auto lum = (0.2126*r + 0.7152*g + 0.0722*b)/256.0;
+        
+        int bin = int(lum*NBINS);
+        //cout << "x " << bin << " " << lum << endl;
+        counts[bin]+=1;
+        totalC += 1;
+    }
+    int t0 = 0;
+    int total = 0;
+    int bc = int(0.1*float(totalC));
+    
+    while ( (total < bc) && (t0 < NBINS) ) {
+        total+=counts[t0];
+        t0+=1;
+    }
+    
+    //for (int i =0; i<=NBINS; i++) {
+    //    cout << "bin count" << i << " " << counts[i] << endl;
+   // }
+    
+    //cout << "totalC " << totalC << " " << WW*HH << endl;
+    //cout << "bc " << bc << endl;
+    
+    int t1 = NBINS;
+    total = 0;
+    while ( total < bc && t1>=0) {
+        total+=counts[t1];
+        t1 = t1-1;
+    }
+    float min_thresh = float(t0)/NBINS;
+    float max_thresh = float(t1)/NBINS;
+    
+    //cout << "range " << t0 << " " << t1  << endl;
+    //cout << "range " << min_thresh << " " << max_thresh  << endl;
+
+    
+    feedback.begin();
+    luma_scale.begin();
+    
+        luma_scale.setUniform1f("t1", min_thresh );
+        luma_scale.setUniform1f("t2", max_thresh );
+
+        fbo.draw(0,0);
+    luma_scale.end();
+    feedback.end();
+     
+
+}
+
 void ofApp::grabScreen() {
     cout << "grab screen " << framenr << "\n";
     int w = fbo.getWidth();
@@ -747,7 +886,7 @@ void ofApp::grabScreen() {
       
     fbo.begin();
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, fbo.getWidth(), fbo.getHeight(), GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
     screenGrab.setFromPixels(pixels, fbo.getWidth(), fbo.getHeight(), OF_IMAGE_COLOR);
     screenGrab.saveImage("output_"+ ofToString(run_id) + "_" + ofToString(framenr) + ".jpg", OF_IMAGE_QUALITY_MEDIUM);
     fbo.end();

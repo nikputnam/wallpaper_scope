@@ -17,6 +17,10 @@ uniform float hue_shift;
 uniform float saturation_boost;
 uniform float brightness_boost;
 uniform float contrast_boost;
+
+uniform float value_b;
+uniform float value_m;
+
 uniform int lattice_range;
 uniform int symmetry_id;
 uniform float weight_range;
@@ -569,11 +573,14 @@ int n_domains = domains[symmetry_id];
     vec3 hsv1 = rgb2hsv(rgb1);
     //vec3 hsv2  = vec3( fract(hsv1.x+0.5*time+hue_shift), hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,clamp( brightness_boost* hsv1.z,0,1)) : hsv1.z ) ;
 
-    hsv1  = vec3( hsv1.x, hsv1.y, clamp( brightness_boost*hsv1.z, 0,1)  ) ;
+    //hsv1  = vec3( hsv1.x, hsv1.y, clamp( brightness_boost*hsv1.z, 0,1)  ) ;
+        hsv1  = vec3( hsv1.x, hsv1.y, clamp( brightness_boost + hsv1.z, 0,1)  ) ;
+
     hsv1  = vec3( hsv1.x, clamp( saturation_boost* hsv1.y,0,1), hsv1.z  ) ;
 
     // make value more extreme for low saturation pixels
-    vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,0.5+clamp( contrast_boost* (hsv1.z-0.5),-0.5,0.5)) : hsv1.z ) ;    
+    //vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,0.5+clamp( contrast_boost* (hsv1.z-0.5),-0.5,0.5)) : hsv1.z ) ;    
+vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y,  clamp(  smoothstep( value_m , value_b, hsv1.z )  ,0.0,1.0)  ) ;    
 
 
     //make value more extreme 
@@ -595,44 +602,6 @@ int n_domains = domains[symmetry_id];
 
     gl_FragColor = vec4(rgb2,1.0) ; // 
 }
-/*
-    // hilight the corrent cell and domain...
-    if ( (oij == floor(mouseS) )  ) { 
-
-        gl_FragColor.rgb = 1.0 - gl_FragColor.rgb;
-
-        if (  nm.x>0.5 ) {
-        gl_FragColor.r = 1.0 - gl_FragColor.r ;
-        }
-
-        if (  nm.y>0.5) {
-        gl_FragColor.b = 1.0 - gl_FragColor.b ;
-        }
-
-                //
-//                gl_FragColor   = vec4(0.0); 
-//                gl_FragColor.w = 1.0 ;  
-    }
-
-//    if (DOMAIN(symmetry_id, fract(mouseS) ) == domain0) {
-//        gl_FragColor.rgb = vec3(0.0);
-//        gl_FragColor.a = 1.0;
-//    }
-
-
-    if ( ll_mouse<5.0 ) { gl_FragColor = vec4(1.0); }
-*/
-
-    //gl_FragColor = mix( vec4(rgb2,1.0) ,vidColor, 0.00 );
-
-    //gl_FragColor = vec4(rgb2,1.0);
-
-    //gl_FragColor =  smoothstep( vec4(0.0), vec4(1.0), gl_FragColor );
-    //gl_FragColor =  smoothstep( vec4(0.0), vec4(1.0), gl_FragColor );
-    //gl_FragColor =  smoothstep( vec4(0.0), vec4(1.0), gl_FragColor );
-//    gl_FragColor =  smoothstep( vec4(0.0), vec4(1.0), gl_FragColor );
-//    gl_FragColor =  smoothstep( vec4(0.0), vec4(1.0), gl_FragColor );
-//    gl_FragColor =  smoothstep( vec4(0.0), vec4(1.0), gl_FragColor );
 
 }
 

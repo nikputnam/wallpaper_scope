@@ -288,8 +288,8 @@ const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_P
 
      // PMG
       id,
-     glideX * mirrorY,
-     glideX,
+     transMhalfY * rot2, // glideX * mirrorY,
+     transMhalfY * mirrorX,  // glideX,
      mirrorY ,
      nil,
      nil,
@@ -408,8 +408,8 @@ const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MAT
 
      // PMG
       id,
-     mirrorY * unglideX,
-     unglideX,
+     rot2 * transPhalfY ,
+     mirrorX * transPhalfY ,  // glideX,
      mirrorY ,
      nil,
      nil,

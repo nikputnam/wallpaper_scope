@@ -416,7 +416,8 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
                 //vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
                 //vec4 lattice_vidColor = mix( texture2DRect(tex0, new_xy)  ,texture2DRect(last_frame, new_xy), ll_mouse2 < 100 ? mix_f : 1.0 ); // texture2DRect(tex0, xy);
                 
-                vec4 lattice_vidColor = mix( texture2DRect(tex0, new_xy)  ,texture2DRect(last_frame, new_xy), mix_f ); // texture2DRect(tex0, xy);
+                vec4 camera_color = texture2DRect(tex0, new_xy) ;
+                vec4 lattice_vidColor = mix( camera_color  ,texture2DRect(last_frame, new_xy), mix_f ); // texture2DRect(tex0, xy);
                 
                 //if ( (ll_mouse2<6.0)  )  {lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb;} // { averaged_vidcolor = 1.0-averaged_vidcolor; }
                 

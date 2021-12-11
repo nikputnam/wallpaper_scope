@@ -18,8 +18,8 @@ float c11=1.0;
 float c12=0.7;
 float c13=0.7;
 float c14=0;
-float c15=0;
-float c16=0;
+float c15=0.0; // camera rotation
+float c16=1.0; // camera scale
 float c17=0;
 float c18=0;
 float c19=0;
@@ -98,7 +98,7 @@ void ofApp::setup(){
     gui.add(lattice_angle.setup("lattice angle",glm::pi<float>()/3.0,0,glm::pi<float>()));
     gui.add(saturation_boost.setup("log saturation boost",0.0,-3.0,3.0));
     gui.add(brightness_boost.setup("log brightness boost",0.0,-0.7,0.7));
-    gui.add(contrast_boost.setup("log contrast boost",0.0,-3.0,3.0));
+    //gui.add(contrast_boost.setup("log contrast boost",0.0,-3.0,3.0));
     
     gui.add(value_b.setup("value_b",1.0,0.0,1.0));
     gui.add(value_m.setup("value_m",0.0,0.0,1.0));
@@ -145,11 +145,11 @@ void ofApp::setup(){
     feedback.allocate(camWidth,camHeight);
 
     filter.begin();
-    ofClear(0,0,0,255);
+    ofClear(255,255,255,255);
     filter.end();
 
     fbo.begin();
-    ofClear(0,0,0,255);
+    ofClear(255,255,255,255);
     fbo.end();
      
     vidGrabber.update();
@@ -343,7 +343,7 @@ void ofApp::setUniforms() {
   //  brightness_boost = brightness_boost.getMin() + (message.value/127.0f)*(brightness_boost.getMax()-brightness_boost.getMin()); }
     
     float bboost = brightness_boost >= 0.0 ? exp( brightness_boost )-1.0 : -exp( -brightness_boost )+1.0 ;
-    float cboost = exp( contrast_boost );
+    //float cboost = exp( contrast_boost );
 
     //    ofxFloatSlider cam_contrast;
     //    ofxFloatSlider cam_brightness;
@@ -364,7 +364,7 @@ void ofApp::setUniforms() {
     current_shader->setUniform1f("hue_shift",float(hue_shift));
     current_shader->setUniform1f("saturation_boost",sboost);
     current_shader->setUniform1f("brightness_boost",bboost);
-    current_shader->setUniform1f("contrast_boost",cboost);
+    //current_shader->setUniform1f("contrast_boost",cboost);
     current_shader->setUniform1f("offset",t * 20.0);
 
     current_shader->setUniform1f("value_b",value_b);
@@ -537,6 +537,13 @@ void ofApp::update(){
             camera_filter.setUniform1f("saturation_boost",float(exp( float( cam_saturation ) )) );
             camera_filter.setUniform1f("brightness_boost",float(exp( float( cam_brightness ) )) );
             camera_filter.setUniform1f("contrast_boost",float(exp( float( cam_contrast ) ) ));
+        
+        camera_filter.setUniform1f("width",float(WW ));
+        camera_filter.setUniform1f("height",float(HH));
+        camera_filter.setUniform1f("angle",float( 2.0* glm::pi<float>() * c15 ));
+        camera_filter.setUniform1f("scale",float( c16 ));
+
+        
             vidGrabber.draw(0,0);
 
         camera_filter.end();
@@ -617,7 +624,8 @@ void ofApp::processMidiEvent() {
                 if(message.control==18){
                     brightness_boost = brightness_boost.getMin() + (message.value/127.0f)*(brightness_boost.getMax()-brightness_boost.getMin()); }
                 if(message.control==19){
-                        contrast_boost = contrast_boost.getMin() + (message.value/127.0f)*(contrast_boost.getMax()-contrast_boost.getMin()); }
+                    c16=(message.value)/32.0f; }
+                        //contrast_boost = contrast_boost.getMin() + (message.value/127.0f)*(contrast_boost.getMax()-contrast_boost.getMin()); }
                 if(message.control==20){
                     c7=(message.value)/64.0f;
                     lattice_aspect_ratio = c7;
@@ -673,8 +681,9 @@ void ofApp::processMidiEvent() {
                     cone.setOrientation(glm::vec3(0,0,360.0*c14));
                     
                 } // vessel rotation
-                if(message.control==8){c15=(message.value-63.0f)/63.0f;}
-                if(message.control==9){c16=(message.value-63.0f)/63.0f;}
+                if(message.control==8){c15=(message.value)/128.0f;}
+                //if(message.control==9){c16=(message.value)/128.0f;}
+                
                // if(message.control==10){c17=(message.value-63.0f)/63.0f;}
                 if(message.control==11){c18=(message.value-63.0f)/63.0f;}
             }
@@ -877,7 +886,7 @@ void ofApp::grabScreen() {
     cout << "grab screen " << framenr << "\n";
     int w = fbo.getWidth();
     int h = fbo.getHeight();
-    unsigned char* pixels = new unsigned char[w*h*3];  ;
+    //unsigned char* pixels = new unsigned char[w*h*3];  ;
     ofImage screenGrab;
     screenGrab.allocate(w,h,OF_IMAGE_COLOR);
     screenGrab.setUseTexture(false);
@@ -892,7 +901,6 @@ void ofApp::grabScreen() {
     fbo.end();
     ofLog(OF_LOG_VERBOSE, "[DiskOut]  saved frame " + ofToString(framenr) );
 }
-
 
 
 //--------------------------------------------------------------

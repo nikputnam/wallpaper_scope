@@ -6,6 +6,13 @@ uniform float saturation_boost;
 uniform float brightness_boost;
 uniform float contrast_boost;
 
+uniform float width;
+uniform float height;
+uniform float angle;
+uniform float scale;
+
+mat2 rot = mat2( sin(angle), cos(angle), -cos(angle), sin(angle) );
+
 uniform sampler2DRect tex0;    
 
 vec3 rgb2hsv(vec3 c)
@@ -29,10 +36,15 @@ vec3 hsv2rgb(vec3 c)
 
 void main(){
 
-    vec4 vidColor =  texture2DRect(tex0, gl_TexCoord[0].xy);
+    //vec4 vidColor =  texture2DRect(tex0, 2.0*gl_TexCoord[0].xy);
+    vec2 xy = (scale * rot * (gl_TexCoord[0].xy - 0.5*vec2(width,height))) + 0.5*vec2(width,height) ;
+    vec4 vidColor =  texture2DRect(tex0, xy);
+    //if (xy.x<0)      { vidColor.w = 0.0; } 
+    //if (xy.y<0)      { vidColor.w = 0.0; } 
+    //if (xy.x>width)  { vidColor.w = 0.0; } 
+    //if (xy.y>height) { vidColor.w = 0.0; } 
     vec3 rgb1 = vidColor.rgb;
     vec3 hsv1 = rgb2hsv(rgb1);
-
 
     hsv1  = vec3( hsv1.x, hsv1.y, clamp( brightness_boost*hsv1.z, 0,1)  ) ;
  //   hsv1  = vec3( hsv1.x, hsv1.y, clamp( hsv1.z, 0,1)  ) ;
@@ -45,7 +57,7 @@ void main(){
 //    gl_FragColor = vec4(1.0) - vidColor ; //vec4(rgb2,1.0) ; // 
 //    gl_FragColor.a=1.0;
 
-gl_FragColor = vec4(rgb2,1) ; 
+gl_FragColor = vec4(rgb2,vidColor.w ); 
 
     //gl_FragColor = vec4(0,1,1,1.0) ; // 
 //    gl_FragColor = vec4(1.0,0,0,1.0);

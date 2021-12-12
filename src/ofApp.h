@@ -41,6 +41,11 @@
 #define P6M  16 //  hexagonal
 enum LatticeType { rhombic, oblique, rectangular, square, hexagonal };
 
+struct basis_vectors {
+    glm::vec2 e1;
+    glm::vec2 e2;
+};
+
 class ofApp : public ofBaseApp , public ofxMidiListener {
 
 	public:
@@ -65,6 +70,8 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
 		
+    basis_vectors getLattice();
+    
         ofVideoGrabber  vidGrabber;
         ofFbo           fbo;
     ofFbo           feedback;

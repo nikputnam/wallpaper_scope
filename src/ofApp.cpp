@@ -3,6 +3,9 @@
 
 #define NBINS 256
 
+#include <iostream>
+#include <fstream>
+
 //variables for the midi controllers
 float c1=0;
 float c2=0;
@@ -267,55 +270,54 @@ void ofApp::updateLightPositions() {
     );
 }
 
-void ofApp::setUniforms() {
+basis_vectors ofApp::getLattice() {
+    basis_vectors b;
     
-    glm::vec2 mxy = glm::vec2(mouseX-PADDING,mouseY-PADDING)/DRAW_FACTOR;
 
-    float t = ofGetElapsedTimef()*0.1;
+
     float phi =float(lattice_rotation) ;//+ t*0.3 ;
     float theta = float(lattice_angle) ; // + (glm::pi<float>() / 4.0)*sin(t*0.2);// + (1.0+0.5*cos(t*0.2)) + glm::pi<float>() / 5.0 ;
     
-    e1 = glm::rotate( glm::vec2(float(e1length), 0.0) , float(phi-0.5*theta) ) ;
+    b.e1 = glm::rotate( glm::vec2(float(e1length), 0.0) , float(phi-0.5*theta) ) ;
     
-    //e2 = ( 0.5*(sin(t)+2.0) )*glm::rotate(e1,theta);
     
     //TODO
     switch (symmetryGroupLatticeType[int(symmetry_id)]) {
         case rhombic:
             //cout << "rhombic" ;
-            e2 =   glm::rotate(e1,theta);   //rhombic
+            b.e2 =   glm::rotate(b.e1,theta);   //rhombic
             break;
         case oblique:
             //cout << "oblique" ;
-            e2 =   glm::rotate( float(lattice_aspect_ratio) * e1,theta);
+            b.e2 =   glm::rotate( float(lattice_aspect_ratio) * b.e1,theta);
             break;
 
         case rectangular:
             //cout << "rectangular" ;
 
-            e2 =   glm::rotate( float(lattice_aspect_ratio) * e1,glm::half_pi<float>());
+            b.e2 =   glm::rotate( float(lattice_aspect_ratio) * b.e1,glm::half_pi<float>());
             break;
 
         case square:
             //cout << "square" ;
 
-            e2 =   glm::rotate( e1,glm::half_pi<float>());
+            b.e2 =   glm::rotate( b.e1,glm::half_pi<float>());
             break;
 
         case hexagonal:
-            e2 =   glm::rotate( e1,glm::pi<float>()/3.0f);
+            b.e2 =   glm::rotate( b.e1,glm::pi<float>()/3.0f);
     }
         
     
     
     origin = glm::vec2(1.0*WW/2.0,1.0*HH/2.0) ; // + glm::vec2(40.0*sin(t),-50.0*cos(t));
     
-    float alpha = glm::dot(e1,e2);
+    float alpha = glm::dot(b.e1,b.e2);
 
-    unskew = glm::inverse( glm::mat2x2( glm::length2(e1) , alpha, alpha, glm::length2(e2) ) ) * glm::mat2x2( e1.x,  e2.x, e1.y, e2.y ) ;
+    unskew = glm::inverse( glm::mat2x2( glm::length2(b.e1) , alpha, alpha, glm::length2(b.e2) ) ) * glm::mat2x2( b.e1.x,  b.e2.x, b.e1.y, b.e2.y ) ;
     
     glm::vec2 wrap_ij = floor( unskew * ( glm::vec2( float(WW), 0.0 ) ));
-    glm::vec2 closest_wrap = wrap_ij.x * e1 + wrap_ij.y * e2 ;
+    glm::vec2 closest_wrap = wrap_ij.x * b.e1 + wrap_ij.y * b.e2 ;
     float closest_wrap_distance = glm::length( closest_wrap ) ;
     float rescale_fact = float(WW) / closest_wrap_distance  ;
     float sintheta = closest_wrap.y / closest_wrap_distance ;
@@ -323,11 +325,24 @@ void ofApp::setUniforms() {
     auto correction_rotation = glm::mat2x2( costheta,  -sintheta, sintheta, costheta ) ;
     //cout << wrap_ij.x << "\t" << wrap_ij.y << "\t" << sintheta << "\t" << costheta << "\n";
 
-    e1 = rescale_fact * correction_rotation * e1 ;
-    e2 = rescale_fact * correction_rotation * e2 ;
+    b.e1 = rescale_fact * correction_rotation * b.e1 ;
+    b.e2 = rescale_fact * correction_rotation * b.e2 ;
 
     
-    alpha = glm::dot(e1,e2);
+    return b;
+}
+
+void ofApp::setUniforms() {
+    glm::vec2 mxy = glm::vec2(mouseX-PADDING,mouseY-PADDING)/DRAW_FACTOR;
+    float t = ofGetElapsedTimef()*0.1;
+
+    basis_vectors b;
+    b=getLattice() ;
+    
+    e1=b.e1;
+    e2=b.e2;
+    
+    float alpha = glm::dot(e1,e2);
     unskew = glm::inverse( glm::mat2x2( glm::length2(e1) , alpha, alpha, glm::length2(e2) ) ) * glm::mat2x2( e1.x,  e2.x, e1.y, e2.y ) ;
     skew =glm::inverse( unskew );
     glm::mat2x2 ii = skew*unskew;
@@ -597,9 +612,9 @@ void ofApp::processMidiEvent() {
         if(message.status < MIDI_SYSEX) {
             if(message.status == MIDI_CONTROL_CHANGE) {
                 
-                cout << "message.control "<< message.control<< endl;
-                cout << "message.value" << message.value<< endl;
-                cout << "messages " <<  midiMessages.size() << endl;
+                //cout << "message.control "<< message.control<< endl;
+                //cout << "message.value" << message.value<< endl;
+                //cout << "messages " <<  midiMessages.size() << endl;
                 
                 
                 if(message.control==9){
@@ -900,6 +915,23 @@ void ofApp::grabScreen() {
     screenGrab.saveImage("output_"+ ofToString(run_id) + "_" + ofToString(framenr) + ".jpg", OF_IMAGE_QUALITY_MEDIUM);
     fbo.end();
     ofLog(OF_LOG_VERBOSE, "[DiskOut]  saved frame " + ofToString(framenr) );
+    
+    basis_vectors b;
+    b=getLattice() ;
+    
+    std::ofstream myfile;
+    myfile.open ("/Users/nik/output_"+ ofToString(run_id) + "_" + ofToString(framenr) + ".txt");
+    myfile << "#output_"+ ofToString(run_id) + "_" + ofToString(framenr)  << endl;
+    myfile << "symmetry" << "\t" << symmetryGroupLabel[int(symmetry_id)] << endl;
+    myfile << "e1" << "\t" << b.e1.x << "\t" << b.e1.y << endl;
+    myfile << "e2" << "\t" << b.e2.x << "\t" << b.e2.y << endl;
+    myfile << "e1length" << "\t" << float(e1length) << endl;
+    myfile << "lattice_rotation" << "\t" << float(lattice_rotation) << endl;
+    myfile << "lattice_angle" << "\t" << float(lattice_angle) << endl;
+    myfile << "lattice_aspect_ratio" << "\t" << float(lattice_aspect_ratio) << endl;
+
+    myfile.close();
+    cout << "wrote to "  <<"output_"+ ofToString(run_id) + "_" + ofToString(framenr) + ".txt" << endl;
 }
 
 

@@ -111,7 +111,7 @@ void ofApp::setup(){
     gui.add(intrainversion.setup("intrainversion",false));
 
     gui.add(iterations.setup("iterations",1,0,10));
-    gui.add(lattice_range.setup("lattice_range",1,0,10));
+    gui.add(lattice_range.setup("lattice_range",2,0,10));
     gui.add(weight_range.setup("weight_range",500,10,1000));
     gui.add(mix_f.setup("log(mix)",0.0,-3.0,0.0));
  
@@ -539,10 +539,9 @@ void ofApp::update(){
 
     filter.begin();
         
-        //filter.begin();
+        // right way?
         ofClear(255,255,255,0);
-        //filter.end();
-
+       
         camera_filter.begin();
         
             //cout << "cam hue shift " << exp( float( cam_hue ) )  << endl;
@@ -865,7 +864,7 @@ void ofApp::imageHistogram() {
         auto b = float(pixels[i+2]);
         auto a = float(pixels[i+3])/256.0f;
 
-        if (a<0.5) {continue;}
+        //if (a<0.5) {continue;}
         auto lum = (0.2126*r + 0.7152*g + 0.0722*b)/256.0;
         
         int bin = int(lum*NBINS);

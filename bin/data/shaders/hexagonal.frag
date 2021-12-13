@@ -401,32 +401,18 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
 
                 // cylindrical wrapping
                 new_xy.x = mod(new_xy.x + lattice_range*boxwh.x, boxwh.x);
-                //float ll = length(new_xy + vec2(50,50) - gl_TexCoord[0].xy);
+
                 float ll = DISTANCE(new_xy,xy); // length(new_xy  - xy);
                 float ll_mouse2 = DISTANCE(new_xy, mouse); //length(new_xy  - mouse);
-                //float ll_mouse3 = length(xy  - mouse);
+
                 float mm = ll / weight_range;
-//                float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*exp( -mm*mm)  ;
-                //float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*clamp(1-mm,0,1)  ;
-                //float w=float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height);
+
                 float w = clamp(1-mm,0,1)  ;
-                //float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*1.0  ;
-
-//                vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
-                //vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
-                //vec4 lattice_vidColor = mix( texture2DRect(tex0, new_xy)  ,texture2DRect(last_frame, new_xy), ll_mouse2 < 100 ? mix_f : 1.0 ); // texture2DRect(tex0, xy);
-                
-
+            
                 vec4 camera_color = texture2DRect(tex0, new_xy) ;
                 vec4 feedback_color = texture2DRect(last_frame, new_xy);
                 new_alpha = max( camera_color.a, new_alpha );
                 new_alpha = max( feedback_color.a, new_alpha );
-
-                
-//                vec4 lattice_vidColor = mix( camera_color  , feedback_color , mix_f ); // texture2DRect(tex0, xy);
-                
-                
-                //if ( (ll_mouse2<3.0)  )  {lattice_vidColor.rgb = vec3(1.0,0,0) ; w=100.0;}  // { averaged_vidcolor = 1.0-averaged_vidcolor; }
 
                 if ((checkerboard==1) && (mod(i+j,2)==1))               { 
                     //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
@@ -444,13 +430,6 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
                 averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(mix_f)*feedback_color.a*feedback_color.rgb ;
 
                 averaged_vidcolor.a = averaged_vidcolor.a + w*( (1.0-mix_f)*camera_color.a + (mix_f)*feedback_color.a ) ;
-
-//                averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(1.0-luma(averaged_vidcolor.rgb))*lattice_vidColor.rgb ;
-//                averaged_vidcolor.a = averaged_vidcolor.a + w*(1.0-luma(averaged_vidcolor.rgb))*1.0 ;
-
-//float lla = length(gl_TexCoord[0].xy - new_xy );
-                //if ( (ll_mouse2<3.0) && (ll_mouse3 < weight_range) ) { averaged_vidcolor = vec4(1.0); }
-                //
 
             }
         }   

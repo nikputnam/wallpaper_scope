@@ -520,10 +520,8 @@ int n_domains = domains[symmetry_id];
 
 
 
-
-
     vec4 averaged_vidcolor = vec4(0.0);
-
+    float new_alpha = 0.0;
 
 //    vec2 xySp = xyS + vec2(0.1,0.1);
     for(int i=-lattice_range;i<=lattice_range;++i) {
@@ -531,42 +529,46 @@ int n_domains = domains[symmetry_id];
             for(int domain1=0;domain1<n_domains;++domain1) {
                 //vec2 new_xy = origin + float(i)*e1 + float(j)*e2 + skewM*( oij + nm );
                 mat3 M = tD[(symmetry_id*MATRICES_PER_SYMMETRY)+domain1] * tDinverse[(symmetry_id*MATRICES_PER_SYMMETRY)+domain0];
+
                 vec2 new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*( floor(xyS) + vec2( M * vec3( fract(xyS),1.0) )) ;
 //                new_xy = vec2( mod((new_xy.x + width), width ), new_xy.y );
-                //new_xy = mod(new_xy + lattice_range*(boxwh+boxwh), boxwh);
+
+                // cylindrical wrapping
                 new_xy.x = mod(new_xy.x + lattice_range*boxwh.x, boxwh.x);
 
-                //float ll = length(new_xy + vec2(50,50) - gl_TexCoord[0].xy);
                 float ll = DISTANCE(new_xy,xy); // length(new_xy  - xy);
                 float ll_mouse2 = DISTANCE(new_xy, mouse); //length(new_xy  - mouse);
-                //float ll_mouse3 = length(xy  - mouse);
+
                 float mm = ll / weight_range;
-//                float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*exp( -mm*mm)  ;
-                //float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*clamp(1-mm,0,1)  ;
-                //float w=float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height);
+
                 float w = clamp(1-mm,0,1)  ;
-                //float w = float(new_xy.x>0)*float(new_xy.x<width)*float(new_xy.y>0)*float(new_xy.y<height)*1.0  ;
+            
+                vec4 camera_color = texture2DRect(tex0, new_xy) ;
+                vec4 feedback_color = texture2DRect(last_frame, new_xy);
+                new_alpha = max( camera_color.a, new_alpha );
+                new_alpha = max( feedback_color.a, new_alpha );
 
-//                vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
-                //vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
-                //vec4 lattice_vidColor = mix( texture2DRect(tex0, new_xy)  ,texture2DRect(last_frame, new_xy), ll_mouse2 < 100 ? mix_f : 1.0 ); // texture2DRect(tex0, xy);
+                if ((checkerboard==1) && (mod(i+j,2)==1))               { 
+                    //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
+                    camera_color.rgb = vec3(1.0) - camera_color.rgb;
+                    feedback_color.rgb = vec3(1.0) - feedback_color.rgb;
+
+                }
+                if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { 
+                    //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
+                    camera_color.rgb = vec3(1.0) - camera_color.rgb;
+                    feedback_color.rgb = vec3(1.0) - feedback_color.rgb;
+                }
                 
-                vec4 lattice_vidColor = mix( texture2DRect(tex0, new_xy)  ,texture2DRect(last_frame, new_xy), mix_f ); // texture2DRect(tex0, xy);
-                
-                if ( (ll_mouse2<3.0)  )  {lattice_vidColor.rgb = vec3(1.0,0,0) ; w=100.0;}  // { averaged_vidcolor = 1.0-averaged_vidcolor; }
+                averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(1.0-mix_f)*camera_color.a*camera_color.rgb ;
+                averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(mix_f)*feedback_color.a*feedback_color.rgb ;
 
-                if ((checkerboard==1) && (mod(i+j,2)==1))               { lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; }
-                if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; }
-                averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*lattice_vidColor.rgb ;
-                averaged_vidcolor.a = averaged_vidcolor.a + w*1.0 ;
-
-                //float lla = length(gl_TexCoord[0].xy - new_xy );
-                //if ( (ll_mouse2<3.0) && (ll_mouse3 < weight_range) ) { averaged_vidcolor = vec4(1.0); }
-                //
+                averaged_vidcolor.a = averaged_vidcolor.a + w*( (1.0-mix_f)*camera_color.a + (mix_f)*feedback_color.a ) ;
 
             }
         }   
     }
+
 
     averaged_vidcolor  = averaged_vidcolor * (1.0 / averaged_vidcolor.a );
     vec3 rgb1 = averaged_vidcolor.rgb;

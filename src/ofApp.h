@@ -73,6 +73,8 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
 		
+    std::map<LatticeType,std::set<LatticeType>> latticeCompat ;
+    
     basis_vectors getLattice();
     
         ofVideoGrabber  vidGrabber;
@@ -122,7 +124,9 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     ofxToggle intrainversion;
     ofxToggle post_checkerboard;
     ofxToggle post_intrainversion;
+    ofxToggle lattice_lock;
 
+    
     ofxFloatSlider brightness_boost;
     ofxFloatSlider contrast_boost;
     
@@ -135,6 +139,9 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     ofxFloatSlider mix_f;
     ofxIntSlider iterations;
     ofxIntSlider symmetry_id;
+    int active_symmetry_id;
+    LatticeType active_lattice;
+
     ofxIntSlider lattice_range;
     ofxPanel gui;
     

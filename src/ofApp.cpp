@@ -80,6 +80,14 @@ void ofApp::setup(){
     symmetryGroupLabel[P6]  = "P6" ;
     symmetryGroupLabel[P6M]  = "P6M" ;
     
+    //std::map<LatticeType,std::set<LatticeType>>
+    latticeCompat[hexagonal] = {hexagonal, rhombic, oblique} ;
+    latticeCompat[square] = {square, rectangular, rhombic, oblique} ;
+    latticeCompat[rhombic] = {rhombic, oblique} ;
+    latticeCompat[rectangular] = {rectangular, oblique} ;
+    latticeCompat[oblique] = { oblique} ;
+
+    
     //mix_f = -5.0;
     
     //
@@ -117,7 +125,7 @@ void ofApp::setup(){
  
     gui.add(post_checkerboard.setup("post checker board",false));
     gui.add(post_intrainversion.setup("post intrainversion",false));
-
+    gui.add(lattice_lock.setup("lattice lock",false));
     
     gui.add(cam_contrast.setup(   "cam contrast",0.5,0.0,1.0));
     gui.add(cam_brightness.setup( "cam brightness",0.5,0,1.0));
@@ -337,12 +345,7 @@ void ofApp::setUniforms() {
     glm::vec2 mxy = glm::vec2(mouseX-PADDING,mouseY-PADDING)/DRAW_FACTOR;
     float t = ofGetElapsedTimef()*0.1;
 
-    basis_vectors b;
-    b=getLattice() ;
-    
-    e1=b.e1;
-    e2=b.e2;
-    
+
     float alpha = glm::dot(e1,e2);
     unskew = glm::inverse( glm::mat2x2( glm::length2(e1) , alpha, alpha, glm::length2(e2) ) ) * glm::mat2x2( e1.x,  e2.x, e1.y, e2.y ) ;
     skew =glm::inverse( unskew );
@@ -395,7 +398,7 @@ void ofApp::setUniforms() {
     current_shader->setUniform2f("origin",origin);
     current_shader->setUniform2f("e1",e1);
     current_shader->setUniform2f("e2",e2);
-    current_shader->setUniform1i("symmetry_id",int(symmetry_id));
+    current_shader->setUniform1i("symmetry_id",active_symmetry_id);
     current_shader->setUniform1i("lattice_range",int(lattice_range));
     current_shader->setUniform1f("weight_range",weight_range);
 
@@ -510,10 +513,26 @@ void ofApp::initMesh(){
 void ofApp::update(){
     
     
-    if (symmetryGroupLatticeType[symmetry_id] == hexagonal && !hex_lattice) {
+    if ( !bool(lattice_lock) ) {
+        basis_vectors b;
+        b=getLattice() ;
+    
+        e1=b.e1;
+        e2=b.e2;
+        active_symmetry_id = int(symmetry_id);
+        active_lattice = symmetryGroupLatticeType[active_symmetry_id];
+    } else if ( active_symmetry_id != int(symmetry_id) ) {
+        const bool is_compat = latticeCompat[active_lattice].find( symmetryGroupLatticeType[int(symmetry_id)] ) != latticeCompat[active_lattice].end();
+        if ( is_compat ) {
+            active_symmetry_id = int(symmetry_id);
+        }
+    }
+    
+    
+    if (symmetryGroupLatticeType[active_symmetry_id] == hexagonal && !hex_lattice) {
         current_shader = &hexagonal_lattices;
         hex_lattice = true;
-    } else if (symmetryGroupLatticeType[symmetry_id] != hexagonal && hex_lattice) {
+    } else if (symmetryGroupLatticeType[active_symmetry_id] != hexagonal && hex_lattice) {
         current_shader = &oblique_lattices;
         hex_lattice = false;
     }
@@ -521,7 +540,7 @@ void ofApp::update(){
     
     //updateMesh();
     //updateLightPositions();
-    symmetry_id.setName( symmetryGroupLabel[int(symmetry_id)] );
+    symmetry_id.setName( symmetryGroupLabel[int(active_symmetry_id)] );
     
     if (!paused) {
     framenr++;
@@ -939,7 +958,7 @@ void ofApp::grabScreen() {
     std::ofstream myfile;
     myfile.open ("/Users/nik/output_"+ ofToString(run_id) + "_" + ofToString(framenr) + ".txt");
     myfile << "#output_"+ ofToString(run_id) + "_" + ofToString(framenr)  << endl;
-    myfile << "symmetry" << "\t" << symmetryGroupLabel[int(symmetry_id)] << endl;
+    myfile << "symmetry" << "\t" << symmetryGroupLabel[int(active_symmetry_id)] << endl;
     myfile << "e1" << "\t" << b.e1.x << "\t" << b.e1.y << endl;
     myfile << "e2" << "\t" << b.e2.x << "\t" << b.e2.y << endl;
     myfile << "e1length" << "\t" << float(e1length) << endl;
@@ -1048,7 +1067,7 @@ void ofApp::draw(){
     //ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
 
     ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
-    ofDrawBitmapStringHighlight( symmetryGroupLabel[int(symmetry_id)]   , 20, 20 );
+    ofDrawBitmapStringHighlight( symmetryGroupLabel[int(active_symmetry_id)]   , 20, 20 );
     
     //fbo.draw(PADDING,PADDING,WW,HH);
     //feedback.draw(PADDING*2+WW,PADDING,WW,HH);

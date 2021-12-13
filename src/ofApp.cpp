@@ -113,7 +113,7 @@ void ofApp::setup(){
     gui.add(iterations.setup("iterations",1,0,10));
     gui.add(lattice_range.setup("lattice_range",2,0,10));
     gui.add(weight_range.setup("weight_range",500,10,1000));
-    gui.add(mix_f.setup("log(mix)",0.0,-3.0,0.0));
+    gui.add(mix_f.setup("log(mix)",0.0,-0.1,0.0));
  
     gui.add(post_checkerboard.setup("post checker board",false));
     gui.add(post_intrainversion.setup("post intrainversion",false));
@@ -311,7 +311,7 @@ basis_vectors ofApp::getLattice() {
         
     
     
-    origin = glm::vec2(1.0*WW/2.0,1.0*HH/2.0) ; // + glm::vec2(40.0*sin(t),-50.0*cos(t));
+    origin = glm::vec2(50.0+1.0*WW/2.0,1.0*HH/2.0) ; // + glm::vec2(40.0*sin(t),-50.0*cos(t));
     
     float alpha = glm::dot(b.e1,b.e2);
 

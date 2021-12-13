@@ -55,7 +55,7 @@ const mat3 transP34Y    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,  0.75, 1.0 );
 const mat3 transP14Y    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,  0.25, 1.0 );
 
 const mat3 transP14X    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.25, 0.0, 1.0 );
-const mat3 transM14X    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.25, 0.0, 1.0 );
+const mat3 transM14X    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,  -0.25, 0.0, 1.0 );
 
 const mat3 reflectBSlash =  transPhalf * reflectY * reflectSlash * reflectY * transMhalf ;
 const mat3 rot2          =  transPhalf * reflectY * reflectX * transMhalf ;
@@ -210,7 +210,7 @@ const int domain[N_SYMMETRIES*N_SECTORS_PLUS_ONE] = int[N_SYMMETRIES*N_SECTORS_P
 
       //p4g
        0,
-    2,2,3,1,   // 1,2,3,4
+    2,3,3,2,   // 1,2,3,4
     4,4,5,5,   // 5,6,7,8
     7,6,6,7,   // 9,10,11,12
     1,1,0,0    // 13,14,15,16
@@ -335,7 +335,7 @@ const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_P
      rot2,  //4
      reflectBSlashQ * rot2 ,  //5 
      rot14,  //6
-     reflectSlash * rot14  //7
+     reflectBSlashQ * rot14  //7
 ); 
 
 const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_PER_SYMMETRY](
@@ -455,6 +455,8 @@ const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MAT
      rot2 * reflectBSlashQ  ,  //5 
      rot34,  //6
      rot34 * reflectBSlashQ   //7
+
+
 ); 
                // mat3 M = tD[domain1] * tDinverse[domain0]
 
@@ -465,7 +467,7 @@ const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MAT
 vec2 boxwh = vec2(width,0.0);
 
 
-#define SECTOR(x, y) sectors[int( int(x<y) + 2*int((x+y)<1) + 4*int(x<0.5) + 8*int(y<0.5) + 16*int( ((x+y)<0.5)||((x+y)>1.5)||(x<(y-0.5))||(x>(y+0.5)) )) ]
+#define SECTOR(x, y) sectors[int( int(x<y) + 2*int((x+y)<1) + 4*int(x<0.5) + 8*int(y<0.5) + 16*int( ((y)<0.5-x)||((y)>(1.5-x))||(y<(x-0.5))||(y>(x+0.5)) )) ]
 #define DOMAIN(g, s ) domain[g*N_SECTORS_PLUS_ONE+SECTOR(s.x,s.y)]
 #define DISTANCE(x,y) (min( length(y+boxwh-x) , min( length(x-y), length( x+boxwh-y  ) )))
 
@@ -498,7 +500,8 @@ vec2 fractXY = fract(xyS);
 int domain0 = DOMAIN(symmetry_id, fract(xyS) );
 int sector0 = SECTOR(fractXY.x, fractXY.y);
  
-if ( sector0 == 0 ) {  // for debugging:  signals an error;
+if ( (sector0 == 0)) {  // for debugging:  signals an error;
+//if ( domain0 == 0 ) {  // for debugging:  signals an error;
     gl_FragColor = vec4(1.0,0,0,1.0);
 
 } else { 

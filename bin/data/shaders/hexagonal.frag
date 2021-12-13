@@ -388,7 +388,7 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
 
 
     vec4 averaged_vidcolor = vec4(0.0);
-
+    float new_alpha = 0.0;
 
 //    vec2 xySp = xyS + vec2(0.1,0.1);
     for(int i=-lattice_range;i<=lattice_range;++i) {
@@ -416,18 +416,34 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
                 //vec4 lattice_vidColor = texture2DRect(last_frame, new_xy);
                 //vec4 lattice_vidColor = mix( texture2DRect(tex0, new_xy)  ,texture2DRect(last_frame, new_xy), ll_mouse2 < 100 ? mix_f : 1.0 ); // texture2DRect(tex0, xy);
                 
-                vec4 camera_color = texture2DRect(tex0, new_xy) ;
-                vec4 lattice_vidColor = mix( camera_color  ,texture2DRect(last_frame, new_xy), mix_f ); // texture2DRect(tex0, xy);
-                
-                //if ( (ll_mouse2<6.0)  )  {lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb;} // { averaged_vidcolor = 1.0-averaged_vidcolor; }
-                
-                if ( (ll_mouse2<3.0)  )  {lattice_vidColor.rgb = vec3(1.0,0,0) ; w=100.0;}  // { averaged_vidcolor = 1.0-averaged_vidcolor; }
 
-                if ((checkerboard==1) && (mod(i+j,2)==1))               { lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; }
-                if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; }
+                vec4 camera_color = texture2DRect(tex0, new_xy) ;
+                vec4 feedback_color = texture2DRect(last_frame, new_xy);
+                new_alpha = max( camera_color.a, new_alpha );
+                new_alpha = max( feedback_color.a, new_alpha );
+
                 
-                averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*lattice_vidColor.rgb ;
-                averaged_vidcolor.a = averaged_vidcolor.a + w ;
+//                vec4 lattice_vidColor = mix( camera_color  , feedback_color , mix_f ); // texture2DRect(tex0, xy);
+                
+                
+                //if ( (ll_mouse2<3.0)  )  {lattice_vidColor.rgb = vec3(1.0,0,0) ; w=100.0;}  // { averaged_vidcolor = 1.0-averaged_vidcolor; }
+
+                if ((checkerboard==1) && (mod(i+j,2)==1))               { 
+                    //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
+                    camera_color.rgb = vec3(1.0) - camera_color.rgb;
+                    feedback_color.rgb = vec3(1.0) - feedback_color.rgb;
+
+                }
+                if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { 
+                    //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
+                    camera_color.rgb = vec3(1.0) - camera_color.rgb;
+                    feedback_color.rgb = vec3(1.0) - feedback_color.rgb;
+                }
+                
+                averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(1.0-mix_f)*camera_color.a*camera_color.rgb ;
+                averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(mix_f)*feedback_color.a*feedback_color.rgb ;
+
+                averaged_vidcolor.a = averaged_vidcolor.a + w*( (1.0-mix_f)*camera_color.a + (mix_f)*feedback_color.a ) ;
 
 //                averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(1.0-luma(averaged_vidcolor.rgb))*lattice_vidColor.rgb ;
 //                averaged_vidcolor.a = averaged_vidcolor.a + w*(1.0-luma(averaged_vidcolor.rgb))*1.0 ;
@@ -450,24 +466,8 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
     hsv1  = vec3( hsv1.x, hsv1.y, clamp( brightness_boost + hsv1.z, 0,1)  ) ;
     hsv1  = vec3( hsv1.x, clamp( saturation_boost* hsv1.y,0,1), hsv1.z  ) ;
 
-    // make value more extreme for low saturation pixels
-    //vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,0.5+clamp( contrast_boost* (hsv1.z-0.5),-0.5,0.5)) : hsv1.z ) ;    
+    vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y,  clamp(  smoothstep( value_m , value_b, hsv1.z )  ,0.0,1.0)  ) ;    
 
-
-    //make value more extreme 
-    //vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y,  smoothstep(0,1,0.5+clamp( contrast_boost* (hsv1.z-0.5),-0.5,0.5))  ) ;    
-
-    //vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y,  clamp( 0.5 + value_m*(hsv1.z-0.5+value_b) ,0.0,1.0)  ) ;    
-vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y,  clamp(  smoothstep( value_m , value_b, hsv1.z )  ,0.0,1.0)  ) ;    
-
-
-   // hsv2  = vec3( hsv2.x, clamp( 3.0* smoothstep(-1.0,1.0, hsv2.y),0,1), hsv1.z  ) ;
-   // hsv2  = vec3( hsv2.x, clamp( 3.0* smoothstep(-1.0,1.0, hsv2.y),0,1), hsv1.z  ) ;
-//    hsv2  = vec3( hsv2.x, 1.0, smoothstep(0.0,1.0,hsv2.z) ) ;
-
-//    hsv2  = vec3( hsv2.x, smoothstep(0.0,1.0, hsv2.y), smoothstep(0.0,1.0,hsv2.z) ) ;
-//    hsv2  = vec3( hsv2.x, smoothstep(0.0,1.0, hsv2.y), smoothstep(0.0,1.0,hsv2.z) ) ;
- //   hsv2  = vec3( hsv2.x, smoothstep(0.0,1.0, hsv2.y), smoothstep(0.0,1.0,hsv2.z) ) ;
     vec3 rgb2 = hsv2rgb(hsv2);
 
     vec2 ij = floor(xyS) ;
@@ -475,48 +475,10 @@ vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y,  clamp(  smoothstep
     if ((post_intrainversion==1) && (mod(domain0,2)==1)) { rgb2 = vec3(1.0) - rgb2; }
 
 
-    gl_FragColor = vec4(rgb2,1.0) ; //
+    gl_FragColor = vec4(rgb2,new_alpha) ; 
 
-    //if (domain0==1) { gl_FragColor = vec4(vec3(0.0),1.0); };
 }
-/*
-    // hilight the corrent cell and domain...
-    if ( (oij == floor(mouseS) )  ) { 
 
-        gl_FragColor.rgb = 1.0 - gl_FragColor.rgb;
-
-        if (  nm.x>0.5 ) {
-        gl_FragColor.r = 1.0 - gl_FragColor.r ;
-        }
-
-        if (  nm.y>0.5) {
-        gl_FragColor.b = 1.0 - gl_FragColor.b ;
-        }
-
-                //
-//                gl_FragColor   = vec4(0.0); 
-//                gl_FragColor.w = 1.0 ;  
-    }
-
-//    if (DOMAIN(symmetry_id, fract(mouseS) ) == domain0) {
-//        gl_FragColor.rgb = vec3(0.0);
-//        gl_FragColor.a = 1.0;
-//    }
-
-
-    if ( ll_mouse<5.0 ) { gl_FragColor = vec4(1.0); }
-*/
-
-    //gl_FragColor = mix( vec4(rgb2,1.0) ,vidColor, 0.00 );
-
-    //gl_FragColor = vec4(rgb2,1.0);
-
-    //gl_FragColor =  smoothstep( vec4(0.0), vec4(1.0), gl_FragColor );
-    //gl_FragColor =  smoothstep( vec4(0.0), vec4(1.0), gl_FragColor );
-    //gl_FragColor =  smoothstep( vec4(0.0), vec4(1.0), gl_FragColor );
-//    gl_FragColor =  smoothstep( vec4(0.0), vec4(1.0), gl_FragColor );
-//    gl_FragColor =  smoothstep( vec4(0.0), vec4(1.0), gl_FragColor );
-//    gl_FragColor =  smoothstep( vec4(0.0), vec4(1.0), gl_FragColor );
 
 }
 

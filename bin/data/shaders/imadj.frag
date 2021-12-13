@@ -10,6 +10,9 @@ uniform float width;
 uniform float height;
 uniform float angle;
 uniform float scale;
+uniform float radius;
+uniform float w;
+
 
 mat2 rot = mat2( sin(angle), cos(angle), -cos(angle), sin(angle) );
 
@@ -38,6 +41,7 @@ void main(){
 
     //vec4 vidColor =  texture2DRect(tex0, 2.0*gl_TexCoord[0].xy);
     vec2 xy = (scale * rot * (gl_TexCoord[0].xy - 0.5*vec2(width,height))) + 0.5*vec2(width,height) ;
+    float r = length( gl_TexCoord[0].xy - 0.5*vec2(width,height) );
     vec4 vidColor =  texture2DRect(tex0, xy);
     //if (xy.x<0)      { vidColor.w = 0.0; } 
     //if (xy.y<0)      { vidColor.w = 0.0; } 
@@ -46,18 +50,19 @@ void main(){
     vec3 rgb1 = vidColor.rgb;
     vec3 hsv1 = rgb2hsv(rgb1);
 
-    hsv1  = vec3( hsv1.x, hsv1.y, clamp( brightness_boost*hsv1.z, 0,1)  ) ;
+    //hsv1  = vec3( hsv1.x, hsv1.y, clamp( brightness_boost*hsv1.z, 0,1)  ) ;
  //   hsv1  = vec3( hsv1.x, hsv1.y, clamp( hsv1.z, 0,1)  ) ;
     hsv1  = vec3( hsv1.x, clamp( saturation_boost* hsv1.y,0,1), hsv1.z  ) ;
 
-    hsv1  = vec3( fract(hsv1.x+hue_shift),          hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,0.5+clamp( contrast_boost* (hsv1.z-0.5),-0.5,0.5)) : hsv1.z ) ;    
+    //hsv1  = vec3( fract(hsv1.x+hue_shift),          hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,0.5+clamp( contrast_boost* (hsv1.z-0.5),-0.5,0.5)) : hsv1.z ) ;    
+    hsv1  = vec3( hsv1.x,          hsv1.y,  clamp(  smoothstep( brightness_boost - contrast_boost , brightness_boost + contrast_boost, hsv1.z )  ,0.0,1.0)  ) ;    
 
     vec3 rgb2 = hsv2rgb(hsv1);
     
 //    gl_FragColor = vec4(1.0) - vidColor ; //vec4(rgb2,1.0) ; // 
 //    gl_FragColor.a=1.0;
 
-gl_FragColor = vec4(rgb2,vidColor.w ); 
+gl_FragColor = vec4(rgb2, (r>(radius*width))? exp(-(r-(radius*width))/w) : 1.0 ); 
 
     //gl_FragColor = vec4(0,1,1,1.0) ; // 
 //    gl_FragColor = vec4(1.0,0,0,1.0);

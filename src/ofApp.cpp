@@ -24,7 +24,7 @@ float c14=0;
 float c15=0.0; // camera rotation
 float c16=1.0; // camera scale
 float c17=0;
-float c18=0;
+float c18=0.5;
 float c19=0;
 float c20=0;
 float c21=0;
@@ -85,7 +85,7 @@ void ofApp::setup(){
     //
     framecount = 0;
     counts = new long[NBINS+1];
-    pixels = new unsigned char[WW*HH*3];  ;
+    pixels = new unsigned char[WW*HH*4];  ;
 
     paused = false;
     mouseDown = false;
@@ -119,8 +119,9 @@ void ofApp::setup(){
     gui.add(post_intrainversion.setup("post intrainversion",false));
 
     
-    gui.add(cam_contrast.setup(   "cam contrast",0.0,-3.0,3.0));
-    gui.add(cam_brightness.setup( "cam brightness",0.0,-3.0,3.0));
+    gui.add(cam_contrast.setup(   "cam contrast",0.5,0.0,1.0));
+    gui.add(cam_brightness.setup( "cam brightness",0.5,0,1.0));
+    
     gui.add(cam_saturation.setup( "cam saturation",0.0,-3.0,3.0));
     gui.add(cam_hue.setup(        "cam hue",0.0,-3.0,3.0));
 
@@ -134,8 +135,8 @@ void ofApp::setup(){
     //lattice_range=1;
     
     ofEnableAlphaBlending();
-    int camWidth          = WW;    // try to grab at this size.
-    int camHeight         = HH;
+    int camWidth          = CAM_WW;    // try to grab at this size.
+    int camHeight         = CAM_HH;
 
     vidGrabber.listDevices();
     vidGrabber.setDeviceID(0);
@@ -143,9 +144,9 @@ void ofApp::setup(){
     vidGrabber.setup(camWidth,camHeight);
 
     
-    fbo.allocate(camWidth,camHeight);
-    filter.allocate(camWidth,camHeight);
-    feedback.allocate(camWidth,camHeight);
+    fbo.allocate(WW,HH);
+    filter.allocate(WW,HH);
+    feedback.allocate(WW,HH);
 
     filter.begin();
     ofClear(255,255,255,255);
@@ -158,8 +159,8 @@ void ofApp::setup(){
     vidGrabber.update();
 
     feedback.begin();
-//    ofClear(0,0,0,255);
-    vidGrabber.draw(0,0);
+     ofClear(0,0,0,0);
+    //vidGrabber.draw(0,0);
     feedback.end();
 
     
@@ -246,7 +247,7 @@ void ofApp::setup(){
 
     view.rotateDeg( glm::pi<float>()/2.0 , 1.0, 0.0, 0.0);
     view.rotateDeg( glm::pi<float>()/3.0, 0, 1.0, 0.0);
-    view.setScale(0.2);
+    view.setScale(0.15);
     cout << view.getGlobalTransformMatrix()<< endl;
     
     initMesh();
@@ -451,21 +452,16 @@ void ofApp::initMesh(){
     int n_sectors = N_SECTORS;
     int n_layers = N_LAYERS;
 
-//    cylinder.set(WW*c10, HH*c11);
 
     for (int j = 0; j<n_layers; j++) {
-        //float y = float(j)*
-    //for (float y = 0; y < n_layers; y+=1.0){
-       // for (float x = 0; x< 2.0f*glm::pi<float>(); x+=2.0f*glm::pi<float>()/float(n_sectors)){
+        
         for (int i=0; i<=n_sectors; i++ ) {
             float x = float(i)*2.0f*glm::pi<float>()/float(n_sectors);
             float r = (WW*c10+ (float(j)*250.0*c12));
             auto p = glm::vec3( r*cos(x)  ,r*sin(x), j*4.5*HH*c11/float(n_layers) );
-            //auto p = glm::vec3( (WW*c10+ (float(j)*250.0*c12))*cos(x)  ,(WW*c10+ (float(j)*250.0*c12))*sin(x), j*4.5*HH*c11/float(n_layers) );
-            coneMesh.addVertex(p);    // mesh index = x + y*width
-                        // this replicates the pixel array within the camera bitmap...
-            //mainMesh.addColor(ofFloatColor(0,0,0));  // placeholder for colour data, we'll get this from the camera
-            //coneMesh.addTexCoord( glm::vec2(float(i)*float(WW)/n_sectors, float(j)*float(HH)/n_layers) );
+            
+            coneMesh.addVertex(p);
+                      
             coneMesh.addTexCoord( (glm::vec2(
                                              (float(i)/n_sectors)*WW,
                                            // (float(j*j)/(n_layers*n_layers))*HH*0.8)  )
@@ -542,6 +538,11 @@ void ofApp::update(){
 
 
     filter.begin();
+        
+        //filter.begin();
+        ofClear(255,255,255,0);
+        //filter.end();
+
         camera_filter.begin();
         
             //cout << "cam hue shift " << exp( float( cam_hue ) )  << endl;
@@ -550,22 +551,26 @@ void ofApp::update(){
             //cout << "cam contrast_boost shift " << exp( float( cam_contrast ) )  << endl;
             camera_filter.setUniform1f("hue_shift",       float(exp( float( cam_hue ) )) );
             camera_filter.setUniform1f("saturation_boost",float(exp( float( cam_saturation ) )) );
-            camera_filter.setUniform1f("brightness_boost",float(exp( float( cam_brightness ) )) );
-            camera_filter.setUniform1f("contrast_boost",float(exp( float( cam_contrast ) ) ));
+            camera_filter.setUniform1f("brightness_boost",float( cam_brightness ) );
+            camera_filter.setUniform1f("contrast_boost", float( cam_contrast ) );
         
-        camera_filter.setUniform1f("width",float(WW ));
-        camera_filter.setUniform1f("height",float(HH));
+        camera_filter.setUniform1f("width",float(CAM_WW ));
+        camera_filter.setUniform1f("height",float(CAM_HH));
         camera_filter.setUniform1f("angle",float( 2.0* glm::pi<float>() * c15 ));
         camera_filter.setUniform1f("scale",float( c16 ));
+        camera_filter.setUniform1f("radius",float( 0.25*c18 ));
+        camera_filter.setUniform1f("w",float( 100.0 ));
 
         
-            vidGrabber.draw(0,0);
+            vidGrabber.draw(0,0,WW,HH);
 
         camera_filter.end();
     filter.end();
         
     //for (int i=0; i<int(iterations); i++ ) {
     fbo.begin();
+        ofClear(255,255,255,0);
+
         current_shader->begin();
             setUniforms();
             filter.draw(0,0);
@@ -608,13 +613,23 @@ void ofApp::update(){
 void ofApp::processMidiEvent() {
     if ( midiMessages.size() > 0 ) {
         ofxMidiMessage &message = midiMessages[0];
-        
-        if(message.status < MIDI_SYSEX) {
-            if(message.status == MIDI_CONTROL_CHANGE) {
-                
-                //cout << "message.control "<< message.control<< endl;
-                //cout << "message.value" << message.value<< endl;
-                //cout << "messages " <<  midiMessages.size() << endl;
+        if(message.status >= MIDI_SYSEX) {
+            cout << "message.status # " << message.status << " " << MIDI_SYSEX << endl;
+            cout << "message.control "<< message.control<< endl;
+            cout << "message.value " << message.value<< endl;
+            cout << "messages " <<  midiMessages.size() << endl;
+        } else
+        //if(message.status < MIDI_SYSEX)
+        {
+            if (message.status != MIDI_CONTROL_CHANGE) {
+                cout << "message.status ## " << message.status << endl;
+            }
+            else //if(message.status == MIDI_CONTROL_CHANGE)
+            {
+                cout << "message.status " << message.status << endl;
+                cout << "message.control "<< message.control<< endl;
+                cout << "message.value " << message.value<< endl;
+                cout << "messages " <<  midiMessages.size() << endl;
                 
                 
                 if(message.control==9){
@@ -700,7 +715,7 @@ void ofApp::processMidiEvent() {
                 //if(message.control==9){c16=(message.value)/128.0f;}
                 
                // if(message.control==10){c17=(message.value-63.0f)/63.0f;}
-                if(message.control==11){c18=(message.value-63.0f)/63.0f;}
+                if(message.control==11){c18=(message.value)/128.0f;}
             }
         }
         
@@ -836,7 +851,7 @@ void ofApp::imageHistogram() {
   //  unsigned char* pixels = new unsigned char[w*h*3];  ;
     fbo.begin();
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
     fbo.end();
 
 
@@ -844,10 +859,13 @@ void ofApp::imageHistogram() {
     
     for (int i =0; i<=NBINS; i++) {counts[i]=0;}
     
-    for (int i = 0; i<w*h*3 ; i+=3*31 ) {
+    for (int i = 0; i<w*h*4 ; i+=4*31 ) {
         auto r = float(pixels[i]);
         auto g = float(pixels[i+1]);
         auto b = float(pixels[i+2]);
+        auto a = float(pixels[i+3])/256.0f;
+
+        if (a<0.5) {continue;}
         auto lum = (0.2126*r + 0.7152*g + 0.0722*b)/256.0;
         
         int bin = int(lum*NBINS);
@@ -912,7 +930,7 @@ void ofApp::grabScreen() {
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
     screenGrab.setFromPixels(pixels, fbo.getWidth(), fbo.getHeight(), OF_IMAGE_COLOR);
-    screenGrab.saveImage("output_"+ ofToString(run_id) + "_" + ofToString(framenr) + ".jpg", OF_IMAGE_QUALITY_MEDIUM);
+    screenGrab.save("output_"+ ofToString(run_id) + "_" + ofToString(framenr) + ".png", OF_IMAGE_QUALITY_HIGH);
     fbo.end();
     ofLog(OF_LOG_VERBOSE, "[DiskOut]  saved frame " + ofToString(framenr) );
     
@@ -929,6 +947,9 @@ void ofApp::grabScreen() {
     myfile << "lattice_rotation" << "\t" << float(lattice_rotation) << endl;
     myfile << "lattice_angle" << "\t" << float(lattice_angle) << endl;
     myfile << "lattice_aspect_ratio" << "\t" << float(lattice_aspect_ratio) << endl;
+    myfile << "WW" << "\t" << WW << endl;
+    myfile << "HH" << "\t" << HH << endl;
+    myfile << "origin" << "\t" << origin.x << "\t" << origin.y << endl;
 
     myfile.close();
     cout << "wrote to "  <<"output_"+ ofToString(run_id) + "_" + ofToString(framenr) + ".txt" << endl;
@@ -1043,6 +1064,14 @@ void ofApp::keyPressed(int key){
         paused = !paused;
     } else if (key == 's') {
         spin = !spin;
+    } else if (key == 'c') {
+        //spin = !spin;
+        
+        feedback.begin();
+         ofClear(0,0,0,0);
+        //vidGrabber.draw(0,0);
+        feedback.end();
+
     } else if (key == 'm' ) {
         processMidiEvents();
         cout << "\n.\n";

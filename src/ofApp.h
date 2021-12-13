@@ -8,16 +8,19 @@
 
 
 #define PADDING 30
-//#define WW 1280
-//#define HH 960
+#define WW 1280
+#define HH 960
 
-#define WW 640
-#define HH 480
+//#define WW 640
+//#define HH 480
 
-#define DRAW_FACTOR 1.5
+#define CAM_WW 640
+#define CAM_HH 480
 
-#define DRAW_WW 640*DRAW_FACTOR
-#define DRAW_HH 480*DRAW_FACTOR
+#define DRAW_FACTOR 1.0
+
+#define DRAW_WW WW*DRAW_FACTOR
+#define DRAW_HH HH*DRAW_FACTOR
 
 
 #define CMM 0   //  rhombic

@@ -174,7 +174,7 @@ void ofApp::setup(){
     vidGrabber.update();
 
     feedback.begin();
-     ofClear(0,0,0,0);
+     ofClear(255,255,255,0);
     //vidGrabber.draw(0,0);
     feedback.end();
 
@@ -569,7 +569,7 @@ void ofApp::update(){
     filter.begin();
         
         // right way?
-        ofClear(0.0,0.0,0.0,0.0);
+        ofClear(255,255,255,0);
         //if (!use_still) {
 
             camera_filter.begin();
@@ -624,6 +624,8 @@ void ofApp::update(){
             feedback.end();
         }
         framecount += 1;
+        
+    
     //}
     
     if (post_checkerboard || post_intrainversion) {
@@ -938,6 +940,8 @@ void ofApp::imageHistogram() {
 
     
     feedback.begin();
+    ofClear(255,255,255,0);
+
     luma_scale.begin();
     
         luma_scale.setUniform1f("t1", min_thresh );
@@ -1087,7 +1091,7 @@ void ofApp::keyPressed(int key){
         //spin = !spin;
         
         feedback.begin();
-         ofClear(0,0,0,0);
+         ofClear(255,255,255,0);
         //vidGrabber.draw(0,0);
         feedback.end();
 

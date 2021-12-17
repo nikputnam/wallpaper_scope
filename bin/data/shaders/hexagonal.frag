@@ -326,7 +326,7 @@ const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MAT
 
 
 //vec2 one_wrap = vec2(  )
-vec2 boxwh = vec2(width,0.0);
+vec2 boxwh = vec2(width,0);
 
 
 #define SECTOR(x, y) sectors[int( int(x<y) + 2*int((x+y)>1) + 4*int(y>1.0-2.0*x) + 8*int(y>1.0-0.5*x) + 16*int(y>0.5-0.5*x) + 32*int(y>2.0-2.0*x)) ]
@@ -383,8 +383,16 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
 //    mat3 oi = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.25, 0.25, 1.0);
     mat3 oi = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 
+//vec4 merge( vec4 s, vec4 d ) {
+//    float a = s.a + d.a*(1.0-s.a);
+//    return vec4(  (s.rgb*s.a + d.rgb*d.a*(1.0-s.a))/a , a );
+//}
 
+//float alpha_merge(float s, float d) { 
+//    return s + d*(1.0-s);
+//}
 
+#define AMERGE(S,D) ((S)+(D)*(1.0-(S)))
 
 
     vec4 averaged_vidcolor = vec4(0.0);
@@ -400,37 +408,43 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
 //                new_xy = vec2( mod((new_xy.x + width), width ), new_xy.y );
 
                 // cylindrical wrapping
-                new_xy.x = mod(new_xy.x + lattice_range*boxwh.x, boxwh.x);
+                new_xy.x = mod(new_xy.x + 5.0*(boxwh.x), boxwh.x);
+                //new_xy.x = mod(new_xy.x , boxwh.x);
 
-                float ll = DISTANCE(new_xy,xy); // length(new_xy  - xy);
-                float ll_mouse2 = DISTANCE(new_xy, mouse); //length(new_xy  - mouse);
+                if ((new_xy.y >= 0.0) && (new_xy.y < height) ) {
 
-                float mm = ll / weight_range;
+                    float ll = DISTANCE(new_xy,xy); // length(new_xy  - xy);
+                    float ll_mouse2 = DISTANCE(new_xy, mouse); //length(new_xy  - mouse);
 
-                float w = clamp(1-mm,0,1)  ;
-            
-                vec4 camera_color = texture2DRect(tex0, new_xy) ;
-                vec4 feedback_color = texture2DRect(last_frame, new_xy);
-                new_alpha = max( camera_color.a, new_alpha );
-                new_alpha = max( feedback_color.a, new_alpha );
+                    float mm = ll / weight_range;
 
-                if ((checkerboard==1) && (mod(i+j,2)==1))               { 
-                    //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
-                    camera_color.rgb = vec3(1.0) - camera_color.rgb;
-                    feedback_color.rgb = vec3(1.0) - feedback_color.rgb;
-
-                }
-                if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { 
-                    //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
-                    camera_color.rgb = vec3(1.0) - camera_color.rgb;
-                    feedback_color.rgb = vec3(1.0) - feedback_color.rgb;
-                }
+                    float w = clamp(1-mm,0,1)  ;
                 
-                averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(1.0-mix_f)*camera_color.a*camera_color.rgb ;
-                averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(mix_f)*feedback_color.a*feedback_color.rgb ;
+                    vec4 camera_color = texture2DRect(tex0, new_xy) ;
+                    vec4 feedback_color = texture2DRect(last_frame, new_xy);
+                    //new_alpha = max( camera_color.a, new_alpha );
+                    //new_alpha = max( feedback_color.a, new_alpha );
 
-                averaged_vidcolor.a = averaged_vidcolor.a + w*( (1.0-mix_f)*camera_color.a + (mix_f)*feedback_color.a ) ;
+                    new_alpha = AMERGE(w*(mix_f)*feedback_color.a ,new_alpha);
+                    new_alpha = AMERGE(w*(1.0-mix_f)*camera_color.a,new_alpha);
 
+                    if ((checkerboard==1) && (mod(i+j,2)==1))               { 
+                        //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
+                        camera_color.rgb = vec3(1.0) - camera_color.rgb;
+                        feedback_color.rgb = vec3(1.0) - feedback_color.rgb;
+
+                    }
+                    if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { 
+                        //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
+                        camera_color.rgb = vec3(1.0) - camera_color.rgb;
+                        feedback_color.rgb = vec3(1.0) - feedback_color.rgb;
+                    }
+                    
+                    averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(1.0-mix_f)*camera_color.a*camera_color.rgb ;
+                    averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(mix_f)*feedback_color.a*feedback_color.rgb ;
+
+                    averaged_vidcolor.a = averaged_vidcolor.a + w*( (1.0-mix_f)*camera_color.a + (mix_f)*feedback_color.a ) ;
+               }
             }
         }   
     }

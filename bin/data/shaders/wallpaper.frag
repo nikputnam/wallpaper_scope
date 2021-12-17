@@ -464,7 +464,7 @@ const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MAT
 
 
 //vec2 one_wrap = vec2(  )
-vec2 boxwh = vec2(width,0.0);
+vec2 boxwh = vec2(width,0);
 
 
 #define SECTOR(x, y) sectors[int( int(x<y) + 2*int((x+y)<1) + 4*int(x<0.5) + 8*int(y<0.5) + 16*int( ((y)<0.5-x)||((y)>(1.5-x))||(y<(x-0.5))||(y>(x+0.5)) )) ]
@@ -521,10 +521,18 @@ int n_domains = domains[symmetry_id];
 //    mat3 oi = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.25, 0.25, 1.0);
     mat3 oi = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 
+//float alpha_merge(float s, float d) { 
+//    return s + d*(1.0-s);
+//}
+#define AMERGE(S,D) ((S)+(D)*(1.0-(S)))
+
+
 
 
     vec4 averaged_vidcolor = vec4(0.0);
     float new_alpha = 0.0;
+
+    float epsilon = 0.01;
 
 //    vec2 xySp = xyS + vec2(0.1,0.1);
     for(int i=-lattice_range;i<=lattice_range;++i) {
@@ -539,6 +547,8 @@ int n_domains = domains[symmetry_id];
                 // cylindrical wrapping
                 new_xy.x = mod(new_xy.x + lattice_range*boxwh.x, boxwh.x);
 
+                if ((new_xy.y >= 0.0) && (new_xy.y < height) ) {
+
                 float ll = DISTANCE(new_xy,xy); // length(new_xy  - xy);
                 float ll_mouse2 = DISTANCE(new_xy, mouse); //length(new_xy  - mouse);
 
@@ -546,29 +556,35 @@ int n_domains = domains[symmetry_id];
 
                 float w = clamp(1-mm,0,1)  ;
             
-                vec4 camera_color = texture2DRect(tex0, new_xy) ;
-                vec4 feedback_color = texture2DRect(last_frame, new_xy);
-                new_alpha = max( camera_color.a, new_alpha );
-                new_alpha = max( feedback_color.a, new_alpha );
+                if (w>epsilon) {
+                    vec4 camera_color = texture2DRect(tex0, new_xy) ;
+                    vec4 feedback_color = texture2DRect(last_frame, new_xy);
+                    //new_alpha = max( camera_color.a, new_alpha );
+                    //new_alpha = max( feedback_color.a, new_alpha );
+                    
+                    
+                    new_alpha = AMERGE(     w*(mix_f)*feedback_color.a , new_alpha );
+                    new_alpha = AMERGE( w*(1.0-mix_f)*camera_color.a   , new_alpha );
 
-                if ((checkerboard==1) && (mod(i+j,2)==1))               { 
-                    //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
-                    camera_color.rgb = vec3(1.0) - camera_color.rgb;
-                    feedback_color.rgb = vec3(1.0) - feedback_color.rgb;
 
+                    if ((checkerboard==1) && (mod(i+j,2)==1))               { 
+                        //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
+                        camera_color.rgb = vec3(1.0) - camera_color.rgb;
+                        feedback_color.rgb = vec3(1.0) - feedback_color.rgb;
+                    }
+
+                    if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { 
+                        //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
+                        camera_color.rgb = vec3(1.0) - camera_color.rgb;
+                        feedback_color.rgb = vec3(1.0) - feedback_color.rgb;
+                    }
+                    
+                    averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(1.0-mix_f)*camera_color.a*camera_color.rgb ;
+                    averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(mix_f)*feedback_color.a*feedback_color.rgb ;
+
+                    averaged_vidcolor.a = averaged_vidcolor.a + w*( (1.0-mix_f)*camera_color.a + (mix_f)*feedback_color.a ) ;
                 }
-                if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { 
-                    //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
-                    camera_color.rgb = vec3(1.0) - camera_color.rgb;
-                    feedback_color.rgb = vec3(1.0) - feedback_color.rgb;
-                }
-                
-                averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(1.0-mix_f)*camera_color.a*camera_color.rgb ;
-                averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(mix_f)*feedback_color.a*feedback_color.rgb ;
-
-                averaged_vidcolor.a = averaged_vidcolor.a + w*( (1.0-mix_f)*camera_color.a + (mix_f)*feedback_color.a ) ;
-
-            }
+            }}
         }   
     }
 
@@ -605,8 +621,10 @@ vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y,  clamp(  smoothstep
     if ((post_intrainversion==1) && (mod(domain0,2)==1)) { rgb2 = vec3(1.0) - rgb2; }
 
 
-    gl_FragColor = vec4(rgb2,1.0) ; // 
+    gl_FragColor = vec4(rgb2,new_alpha) ; // 
 }
+
+//gl_FragColor = vec4(0) ;
 
 }
 

@@ -81,7 +81,8 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
         ofFbo           fbo;
     ofFbo           feedback;
     ofFbo           filter;
-    
+    ofFbo           still_fbo;
+
     ofShader        luma_scale;
     
     ofShader        camera_filter;
@@ -89,6 +90,10 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     ofShader        hexagonal_lattices;
     ofShader*        current_shader;
     bool hex_lattice;
+
+    bool use_still;
+    ofImage still;
+    
     unsigned long framecount;
     
     long* counts ;
@@ -106,6 +111,7 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
 
     bool paused;
     bool spin;
+    bool hide;
 
     bool mouseDown;
     

@@ -42,7 +42,8 @@ float c31=0;
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-
+    use_still = false;
+    hide = false;
     
     symmetryGroupLatticeType[CMM] = rhombic ;
     symmetryGroupLatticeType[CM]  = rhombic ;
@@ -114,14 +115,14 @@ void ofApp::setup(){
     gui.add(value_b.setup("value_b",1.0,0.0,1.0));
     gui.add(value_m.setup("value_m",0.0,0.0,1.0));
 
-    gui.add(symmetry_id.setup("symmetry group",12,0,16));
+    gui.add(symmetry_id.setup("symmetry group",2,0,16));
     gui.add(checkerboard.setup("checker board",false));
     gui.add(intrainversion.setup("intrainversion",false));
 
     gui.add(iterations.setup("iterations",1,0,10));
     gui.add(lattice_range.setup("lattice_range",2,0,10));
-    gui.add(weight_range.setup("weight_range",500,10,1000));
-    gui.add(mix_f.setup("log(mix)",0.0,-0.1,0.0));
+    gui.add(weight_range.setup("weight_range",500,10,5000));
+    gui.add(mix_f.setup("log(mix)",0.0,-1.0,0.0));
  
     gui.add(post_checkerboard.setup("post checker board",false));
     gui.add(post_intrainversion.setup("post intrainversion",false));
@@ -154,14 +155,20 @@ void ofApp::setup(){
     
     fbo.allocate(WW,HH);
     filter.allocate(WW,HH);
+    still_fbo.allocate(WW,HH);
+
     feedback.allocate(WW,HH);
 
     filter.begin();
-    ofClear(255,255,255,255);
+    ofClear(255,255,255,0);
     filter.end();
+    
+    still_fbo.begin();
+    ofClear(255,255,255,0);
+    still_fbo.end();
 
     fbo.begin();
-    ofClear(255,255,255,255);
+    ofClear(255,255,255,0);
     fbo.end();
      
     vidGrabber.update();
@@ -193,6 +200,7 @@ void ofApp::setup(){
 */
     
     //3D
+    
     ofSetVerticalSync(true);
     ofBackground(20);
 
@@ -544,8 +552,10 @@ void ofApp::update(){
     
     if (!paused) {
     framenr++;
-    vidGrabber.update();
-
+        
+        if (!use_still) {
+            vidGrabber.update();
+        }
     
     
     /*
@@ -559,30 +569,36 @@ void ofApp::update(){
     filter.begin();
         
         // right way?
-        ofClear(255,255,255,0);
-       
-        camera_filter.begin();
-        
-            //cout << "cam hue shift " << exp( float( cam_hue ) )  << endl;
-            //cout << "cam saturation_boost shift " << exp( float( cam_saturation ) )  << endl;
-            //cout << "cam brightness_boost shift " << exp( float( cam_brightness ) )  << endl;
-            //cout << "cam contrast_boost shift " << exp( float( cam_contrast ) )  << endl;
-            camera_filter.setUniform1f("hue_shift",       float(exp( float( cam_hue ) )) );
-            camera_filter.setUniform1f("saturation_boost",float(exp( float( cam_saturation ) )) );
-            camera_filter.setUniform1f("brightness_boost",float( cam_brightness ) );
-            camera_filter.setUniform1f("contrast_boost", float( cam_contrast ) );
-        
-        camera_filter.setUniform1f("width",float(CAM_WW ));
-        camera_filter.setUniform1f("height",float(CAM_HH));
-        camera_filter.setUniform1f("angle",float( 2.0* glm::pi<float>() * c15 ));
-        camera_filter.setUniform1f("scale",float( c16 ));
-        camera_filter.setUniform1f("radius",float( 0.25*c18 ));
-        camera_filter.setUniform1f("w",float( 100.0 ));
+        ofClear(0.0,0.0,0.0,0.0);
+        //if (!use_still) {
 
-        
-            vidGrabber.draw(0,0,WW,HH);
+            camera_filter.begin();
+            
+                camera_filter.setUniform1f("hue_shift",       float(exp( float( cam_hue ) )) );
+                camera_filter.setUniform1f("saturation_boost",float(exp( float( cam_saturation ) )) );
+                camera_filter.setUniform1f("brightness_boost",float( cam_brightness ) );
+                camera_filter.setUniform1f("contrast_boost", float( cam_contrast ) );
+                
+        if (!use_still) {
 
-        camera_filter.end();
+                camera_filter.setUniform1f("width",float(CAM_WW ));
+                camera_filter.setUniform1f("height",float(CAM_HH));
+        } else {
+            
+            camera_filter.setUniform1f("width",float(still.getWidth()));
+            camera_filter.setUniform1f("height",float(still.getHeight()));
+        }
+                camera_filter.setUniform1f("angle",float( 2.0* glm::pi<float>() * c15 ));
+                camera_filter.setUniform1f("scale",float( c16 ));
+                camera_filter.setUniform1f("radius",float( c18 ));
+                camera_filter.setUniform1f("w",float( 100.0 ));
+            if (!use_still) {
+                vidGrabber.draw(0,0,WW,HH);
+        } else {
+            still_fbo.draw(100,100);
+        }
+            camera_filter.end();
+      
     filter.end();
         
     //for (int i=0; i<int(iterations); i++ ) {
@@ -603,6 +619,7 @@ void ofApp::update(){
             framecount = 0;
         } else {
             feedback.begin();
+                ofClear(255,255,255,0);
                 fbo.draw(0,0);
             feedback.end();
         }
@@ -976,7 +993,7 @@ void ofApp::grabScreen() {
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    ofBackground(ofColor::gray);
+    ofBackground(ofColor::white);
 
     ofSetColor(255);
     //vidGrabber.draw(PADDING,PADDING,WW,HH);
@@ -987,75 +1004,54 @@ void ofApp::draw(){
     fbo.draw(PADDING,PADDING,DRAW_WW,DRAW_HH);
     fbo.draw(PADDING+DRAW_WW,PADDING,DRAW_WW,DRAW_HH);
 
-    
-    float spinX = 0.0; //sin(ofGetElapsedTimef()*.05f);
-    float spinY = cos(ofGetElapsedTimef()*.045f);
-    
-    
-    if (!spin) {
-        spinX = spinY = 0.0f;
-    }
-    
-    if (mouseDown) {
-        spinX = spinY = 0.0f;
-        view.setOrientation(glm::vec3(0,0,0));
-        
-        view.rotateDeg(0.5*glm::pi<float>(), 1.0, 0.0, 0.0);
+    if (!hide) {
 
-        spinX = 100.0*dragXY.y;
-        spinY = 100.0*dragXY.x;
-    }
+            float spinX = 0.0; //sin(ofGetElapsedTimef()*.05f);
+            float spinY = cos(ofGetElapsedTimef()*.045f);
+            
+            
+            if (!spin) {
+                spinX = spinY = 0.0f;
+            }
+            
+            if (mouseDown) {
+                spinX = spinY = 0.0f;
+                view.setOrientation(glm::vec3(0,0,0));
+                
+                view.rotateDeg(0.5*glm::pi<float>(), 1.0, 0.0, 0.0);
 
-    cam.setGlobalPosition({ 0,0,cam.getImagePlaneDistance(ofGetCurrentViewport()) });
-    cam.begin();
+                spinX = 100.0*dragXY.y;
+                spinY = 100.0*dragXY.x;
+            }
 
-    //cylinder.mapTexCoordsFromTexture( fbo.getTexture() );
+            cam.setGlobalPosition({ 0,0,cam.getImagePlaneDistance(ofGetCurrentViewport()) });
+            cam.begin();
 
-    ofEnableDepthTest();
+            //cylinder.mapTexCoordsFromTexture( fbo.getTexture() );
 
-    ofEnableLighting();
-    pointLight.enable();
-    pointLight2.enable();
-    pointLight3.enable();
+            ofEnableDepthTest();
 
-    float screenWidth = ofGetWidth();
-    float screenHeight = ofGetHeight();
+            ofEnableLighting();
+            pointLight.enable();
+            pointLight2.enable();
+            pointLight3.enable();
 
-    
-    //cylinder.setPosition(  -screenWidth * .5 + screenWidth *  2/4.f, screenHeight * -1.1/6.f, 0);
-    // Cylinder //
-    
-    view.rotateDeg(spinX, 1.0, 0.0, 0.0);
-    view.rotateDeg(spinY, 0  , 1.0, 0.0);
-    
-    //cylinder.rotateDeg(spinX, 1.0, 0.0, 0.0);
-    //cylinder.rotateDeg(spinY, 0, 1.0, 0.0);
-    
-    /*
-        fbo.getTexture().bind();
-            //material.begin();
-                //ofFill();
-        
-                cylinder.draw();
-    
-            //material.end();
-        fbo.getTexture().unbind();
-    */
-    
-    
-        //view.transformGL();
-//        coneMesh.drawFaces();
-        //view.draw();
-        fbo.getTexture().bind();
-            cone.draw();
-        fbo.getTexture().unbind();
+            float screenWidth = ofGetWidth();
+            float screenHeight = ofGetHeight();
 
-        //cone.drawWireframe();
+            
+            //cylinder.setPosition(  -screenWidth * .5 + screenWidth *  2/4.f, screenHeight * -1.1/6.f, 0);
+            // Cylinder //
+            
+            view.rotateDeg(spinX, 1.0, 0.0, 0.0);
+            view.rotateDeg(spinY, 0  , 1.0, 0.0);
+            
 
-        //view.restoreTransformGL();
+            fbo.getTexture().bind();
+                cone.draw();
+            fbo.getTexture().unbind();
     
-    
-        
+
 
         ofDisableLighting();
     
@@ -1064,6 +1060,7 @@ void ofApp::draw(){
         ofFill();
 
         cam.end();
+    }
     //ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
 
     ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
@@ -1082,6 +1079,10 @@ void ofApp::keyPressed(int key){
         paused = !paused;
     } else if (key == 's') {
         spin = !spin;
+    } else if (key == 'h') {
+            hide = !hide;
+    } else if (key == 'x') {
+        use_still = false;
     } else if (key == 'c') {
         //spin = !spin;
         
@@ -1149,6 +1150,20 @@ void ofApp::gotMessage(ofMessage msg){
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo){ 
 
+    if (dragInfo.files.size() > 0) {
+        still.load(dragInfo.files[0]);
+        use_still = true;
+//        glDeleteTextures(1, &texture);
+//        glGenTextures(1,&texture);
+//        setTextureArray();
+        
+        still_fbo.begin();
+        ofClear(255,255,255,0);
+        still.draw(0,0);
+        still_fbo.end();
+
+      }
+    
 }
 
 

@@ -43,6 +43,8 @@ void main(){
     vec2 xy = (scale * rot * (gl_TexCoord[0].xy - 0.5*vec2(width,height))) + 0.5*vec2(width,height) ;
     float r = length( gl_TexCoord[0].xy - 0.5*vec2(width,height) );
     vec4 vidColor =  texture2DRect(tex0, xy);
+
+    /*
     //if (xy.x<0)      { vidColor.w = 0.0; } 
     //if (xy.y<0)      { vidColor.w = 0.0; } 
     //if (xy.x>width)  { vidColor.w = 0.0; } 
@@ -63,6 +65,10 @@ void main(){
 //    gl_FragColor.a=1.0;
 
 gl_FragColor = vec4(rgb2, (r>(radius*width))? exp(-(r-(radius*width))/w) : 1.0 ); 
+*/
+
+    gl_FragColor = vec4(vidColor.rgb,(r>(radius*width))? vidColor.a*exp(-(r-(radius*width))/w) : vidColor.a )  ;
+    //gl_FragColor = vec4(vidColor.rgb,(r>(radius*width))? 0.0 : vidColor.a )  ;
 
     //gl_FragColor = vec4(0,1,1,1.0) ; // 
 //    gl_FragColor = vec4(1.0,0,0,1.0);

@@ -481,9 +481,9 @@ mat2 unskewM = mat2( unskew );
 mat2 skewM = mat2( skew );
 
 vec2 xyS = unskewM * ( gl_TexCoord[0].xy  - origin);
-vec2 wrap_ij = floor( unskewM * ( boxwh ) );
-vec2 oij = floor(xyS);
-vec2 nm  = fract(xyS);
+//vec2 wrap_ij = floor( unskewM * ( boxwh ) );
+//vec2 oij = floor(xyS);
+//vec2 nm  = fract(xyS);
 vec2 mouseS = unskewM * (mouse-origin);
 //vec2 xyS = unskew * (gl_TexCoord[0].xy - offset) ;
 //vec2 xyS = (gl_TexCoord[0].xy - offset) ;
@@ -542,7 +542,7 @@ int n_domains = domains[symmetry_id];
                 mat3 M = tD[(symmetry_id*MATRICES_PER_SYMMETRY)+domain1] * tDinverse[(symmetry_id*MATRICES_PER_SYMMETRY)+domain0];
 
                 vec2 new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*( floor(xyS) + vec2( M * vec3( fract(xyS),1.0) )) ;
-//                new_xy = vec2( mod((new_xy.x + width), width ), new_xy.y );
+//                vec2 new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*(  vec2( M * vec3( fract(xyS),1.0) )) ;
 
                 // cylindrical wrapping
                 new_xy.x = mod(new_xy.x + lattice_range*boxwh.x, boxwh.x);

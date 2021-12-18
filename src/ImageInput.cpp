@@ -54,7 +54,7 @@ void ImageInput::draw() {
                 img_shader->setUniform1f("angle",float( angle));
                 img_shader->setUniform1f("scale",float( 1.0/scale ));
                 img_shader->setUniform1f("radius",float( spotlight ));
-                img_shader->setUniform1f("w",float( spotlight_margin ));
+                img_shader->setUniform1f("w",float( 100.0*spotlight_margin ));
                 if (useCamera) {
                     vidGrabber->draw(0,0,WW,HH);
                 } else {
@@ -78,7 +78,7 @@ void ImageInput::setup( string name,ofShader* shader, ofVideoGrabber* grabber ) 
     x.set("x",0,0,1);   parameters.add(x);
     y.set("y",0,0,1);   parameters.add(y);
     scale.set("scale",1,0.01,20.0);   parameters.add(scale);
-    spotlight.set("spotlight",1,0.01,20.0);   parameters.add(spotlight);
+    spotlight.set("spotlight",1,0.1,3.0);   parameters.add(spotlight);
     spotlight_margin.set("spotlight margin",1,0.01,20.0);   parameters.add(spotlight_margin);
 
     useCamera.set("use camera", false, false, true);  parameters.add(useCamera);

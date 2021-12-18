@@ -586,15 +586,14 @@ void ofApp::update(){
 */
 
 
+    //composite the images here into the "filter" fbo
     filter.begin();
-        
-        
         // right way?
         ofClear(255,255,255,0);
         //if (!use_still) {
-        imgs[0].draw();
-
-        
+        for (int i =0; i<imgs.size(); i++) {
+            imgs[i].draw();
+        }
     filter.end();
         
     //for (int i=0; i<int(iterations); i++ ) {
@@ -609,18 +608,18 @@ void ofApp::update(){
      
         
     
-     
-        if (framecount == 1) {
-            imageHistogram();
-            framecount = 0;
-        } else {
-            feedback.begin();
-                ofClear(255,255,255,0);
-                fbo.draw(0,0);
-            feedback.end();
-        }
-        framecount += 1;
-        
+ 
+    if (framecount == 1) {
+        imageHistogram();
+        framecount = 0;
+    } else {
+        feedback.begin();
+            ofClear(255,255,255,0);
+            fbo.draw(0,0);
+        feedback.end();
+    }
+    framecount += 1;
+    
     
     //}
     
@@ -969,18 +968,17 @@ void ofApp::imageHistogram() {
 
     
     feedback.begin();
-    ofClear(255,255,255,0);
+        ofClear(255,255,255,0);
 
-    luma_scale.begin();
+        luma_scale.begin();
     
-        luma_scale.setUniform1f("t1", min_thresh );
-        luma_scale.setUniform1f("t2", max_thresh );
+            luma_scale.setUniform1f("t1", min_thresh );
+            luma_scale.setUniform1f("t2", max_thresh );
 
-        fbo.draw(0,0);
-    luma_scale.end();
+            fbo.draw(0,0);
+        luma_scale.end();
     feedback.end();
      
-
 }
 
 void ofApp::grabScreen() {
@@ -1191,15 +1189,16 @@ void ofApp::dragEvent(ofDragInfo dragInfo){
 
     if (dragInfo.files.size() > 0) {
         
-        imgs[0].img.load(dragInfo.files[0]);
-        cout << "loaded image " << imgs[0].img.getWidth() << " x " << imgs[0].img.getHeight()  << endl;
-        imgs[0].useCamera = false;
-        
-        imgs[0].fbo.begin();
-        ofClear(255,255,255,0);
-        imgs[0].img.draw(0,0);
-        imgs[0].fbo.end();
-
+        for (int i = 0 ; i<dragInfo.files.size() && i<imgs.size(); i++ ) {
+            imgs[i].img.load(dragInfo.files[i]);
+            cout << "loaded image " << imgs[i].img.getWidth() << " x " << imgs[i].img.getHeight()  << endl;
+            imgs[i].useCamera = false;
+            imgs[i].active=true;
+            imgs[i].fbo.begin();
+            ofClear(255,255,255,0);
+            imgs[i].img.draw(0,0);
+            imgs[i].fbo.end();
+        }
         
         //still.load(dragInfo.files[0]);
 //        use_still = true;

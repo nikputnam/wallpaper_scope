@@ -44,6 +44,9 @@ float c31=0;
 void ofApp::setup(){
     use_still = false;
     hide = false;
+    control_mode = lattice;
+    
+   
     
     symmetryGroupLatticeType[CMM] = rhombic ;
     symmetryGroupLatticeType[CM]  = rhombic ;
@@ -128,11 +131,14 @@ void ofApp::setup(){
     gui.add(post_intrainversion.setup("post intrainversion",false));
     gui.add(lattice_lock.setup("lattice lock",false));
     
-    gui.add(cam_contrast.setup(   "cam contrast",0.5,0.0,1.0));
-    gui.add(cam_brightness.setup( "cam brightness",0.5,0,1.0));
+    //gui.add(cam_contrast.setup(   "cam contrast",0.5,0.0,1.0));
+    //gui.add(cam_brightness.setup( "cam brightness",0.5,0,1.0));
     
-    gui.add(cam_saturation.setup( "cam saturation",0.0,-3.0,3.0));
-    gui.add(cam_hue.setup(        "cam hue",0.0,-3.0,3.0));
+   // gui.add(cam_saturation.setup( "cam saturation",0.0,-3.0,3.0));
+    //gui.add(cam_hue.setup(        "cam hue",0.0,-3.0,3.0));
+
+    //gui.add(im1.parameters);
+    
 
 //    ofxFloatSlider cam_contrast;
 //    ofxFloatSlider cam_brightness;
@@ -200,6 +206,20 @@ void ofApp::setup(){
 */
     
     //3D
+    
+    for (int i = 0;i<3; i++ ) {
+        imgs.push_back( ImageInput() );
+        imgs.back().setup("img"+std::to_string(i), &camera_filter,  &vidGrabber );
+    }
+    
+    imgs[0].useCamera = true;
+    imgs[0].active = true;
+
+    
+    for (auto i=0;i< imgs.size(); i++) {
+        gui.add( imgs[i].parameters );
+        gui.getGroup( imgs[i].parameters.getName() ).minimize();
+    }
     
     ofSetVerticalSync(true);
     ofBackground(20);
@@ -568,37 +588,13 @@ void ofApp::update(){
 
     filter.begin();
         
+        
         // right way?
         ofClear(255,255,255,0);
         //if (!use_still) {
+        imgs[0].draw();
 
-            camera_filter.begin();
-            
-                camera_filter.setUniform1f("hue_shift",       float(exp( float( cam_hue ) )) );
-                camera_filter.setUniform1f("saturation_boost",float(exp( float( cam_saturation ) )) );
-                camera_filter.setUniform1f("brightness_boost",float( cam_brightness ) );
-                camera_filter.setUniform1f("contrast_boost", float( cam_contrast ) );
-                
-        if (!use_still) {
-
-                camera_filter.setUniform1f("width",float(CAM_WW ));
-                camera_filter.setUniform1f("height",float(CAM_HH));
-        } else {
-            
-            camera_filter.setUniform1f("width",float(still.getWidth()));
-            camera_filter.setUniform1f("height",float(still.getHeight()));
-        }
-                camera_filter.setUniform1f("angle",float( 2.0* glm::pi<float>() * c15 ));
-                camera_filter.setUniform1f("scale",float( c16 ));
-                camera_filter.setUniform1f("radius",float( c18 ));
-                camera_filter.setUniform1f("w",float( 100.0 ));
-            if (!use_still) {
-                vidGrabber.draw(0,0,WW,HH);
-        } else {
-            still_fbo.draw(100,100);
-        }
-            camera_filter.end();
-      
+        
     filter.end();
         
     //for (int i=0; i<int(iterations); i++ ) {
@@ -647,6 +643,120 @@ void ofApp::update(){
     processMidiEvents();
 }
 
+void ofApp::handleMidiMessage(ofxMidiMessage &message) {
+    
+    
+    switch(control_mode) {
+            
+        case ControlMode::lattice:
+    
+    if(message.control==9){
+        
+        mix_f    = mix_f.getMin() + (message.value/127.0f)*(mix_f.getMax()-mix_f.getMin()); }
+
+    if(message.control==23  && message.value == 127){ checkerboard = !checkerboard; }
+    if(message.control==24  && message.value == 127){ intrainversion = !intrainversion; }
+    if(message.control==25  && message.value == 127){ post_checkerboard = !post_checkerboard; }
+    if(message.control==26  && message.value == 127){ post_intrainversion = !post_intrainversion; }
+
+    
+    if(message.control==14){c3=(message.value-63.0f)/63.0f;
+        e1length    = e1length.getMin() + (message.value/127.0f)*(e1length.getMax()-e1length.getMin()); }
+    
+    if(message.control==15){c1=(message.value-63.0f)/63.0f;  lattice_rotation = (message.value/127.0f)*glm::pi<float>(); }
+    if(message.control==16){c2=(message.value-63.0f)/63.0f;  lattice_angle    = (message.value/127.0f)*glm::pi<float>(); }
+    
+    if(message.control==17){
+        saturation_boost = saturation_boost.getMin() + (message.value/127.0f)*(saturation_boost.getMax()-saturation_boost.getMin()); }
+    if(message.control==18){
+        brightness_boost = brightness_boost.getMin() + (message.value/127.0f)*(brightness_boost.getMax()-brightness_boost.getMin()); }
+    if(message.control==19){
+        c16=(message.value)/32.0f; }
+            //contrast_boost = contrast_boost.getMin() + (message.value/127.0f)*(contrast_boost.getMax()-contrast_boost.getMin()); }
+    if(message.control==20){
+        c7=(message.value)/64.0f;
+        lattice_aspect_ratio = c7;
+    }
+    
+    if(message.control==21){
+        //c8=(message.value-63.0f)/63.0f;
+        value_m = value_m.getMin() +(message.value/127.0f)*(value_m.getMax()-value_m.getMin());
+    }
+    
+    if(message.control==10){
+        //c8=(message.value-63.0f)/63.0f;
+        value_b = value_b.getMin() +(message.value/127.0f)*(value_b.getMax()-value_b.getMin());
+    }
+    
+    if(message.control==22){
+        c9=(message.value)/129.0f;
+        
+        if ( symmetry_id != int( 17*c9 ) ) {
+            symmetry_id = int( 17*c9 );
+            feedback.begin();
+                ofClear(255,255,255,0);
+                fbo.draw(0,0);
+            feedback.end();
+        }
+    }
+    
+    if(message.control==8){c15=(message.value)/128.0f;}
+    //if(message.control==9){c16=(message.value)/128.0f;}
+    
+   // if(message.control==10){c17=(message.value-63.0f)/63.0f;}
+    if(message.control==11){c18=(message.value)/128.0f;}
+            break;
+            
+        case ControlMode::cone:
+            
+            
+            
+            if(message.control==3){
+                c10=(message.value)/128.0f;
+                //cylinder.set(WW*c10, HH*c11);
+                //cylinder.mapTexCoordsFromTexture( fbo.getTexture() );
+                updateMesh();
+            }
+            if(message.control==4){
+                c11=(message.value)/128.0f;
+                //cylinder.set(WW*c10, HH*c11);
+                //cylinder.mapTexCoordsFromTexture( fbo.getTexture() );
+                
+                
+                for( int i = 0 ; i<  cylinder.getMesh().getNumTexCoords(); i++ ) {
+                    cout << "cylinder texcoord" << i <<" " << cylinder.getMesh().getTexCoord(i) << endl;
+                }
+                
+                for( int i = 0 ; i<  coneMesh.getNumTexCoords(); i++ ) {
+                    cout << "coneMesh texcoord" << i <<" " << coneMesh.getTexCoord(i) << endl;
+                }
+                
+                for( int i = 0 ; i<  cone.getMesh().getNumTexCoords(); i++ ) {
+                    cout << "cone texcoord" << i <<" " << cone.getMesh().getTexCoord(i) << endl;
+                }
+                cout << "c10,11,12: " << c10 << " " << c11 << " " << c12 << endl;
+                updateMesh();
+                
+            }
+            if(message.control==5){c12=(message.value)/123.0f; updateMesh();}
+            if(message.control==6){c13=(message.value)/63.0f; updateMesh();}
+            if(message.control==7){
+                c14=(message.value)/128.0f;
+                cone.setOrientation(glm::vec3(0,0,360.0*c14));
+                
+            } // vessel rotation
+            
+            break;
+            
+        case ControlMode::input:
+            
+            break;
+            
+    }
+    
+}
+    
+
 void ofApp::processMidiEvent() {
     if ( midiMessages.size() > 0 ) {
         ofxMidiMessage &message = midiMessages[0];
@@ -668,91 +778,10 @@ void ofApp::processMidiEvent() {
                 cout << "message.value " << message.value<< endl;
                 cout << "messages " <<  midiMessages.size() << endl;
                 
-                
-                if(message.control==9){
-                    
-                    mix_f    = mix_f.getMin() + (message.value/127.0f)*(mix_f.getMax()-mix_f.getMin()); }
+                handleMidiMessage(message);
                 
                 
-                if(message.control==23  && message.value == 127){ checkerboard = !checkerboard; }
-                if(message.control==24  && message.value == 127){ intrainversion = !intrainversion; }
-                if(message.control==25  && message.value == 127){ post_checkerboard = !post_checkerboard; }
-                if(message.control==26  && message.value == 127){ post_intrainversion = !post_intrainversion; }
-
                 
-                if(message.control==14){c3=(message.value-63.0f)/63.0f;
-                    e1length    = e1length.getMin() + (message.value/127.0f)*(e1length.getMax()-e1length.getMin()); }
-                
-                if(message.control==15){c1=(message.value-63.0f)/63.0f;  lattice_rotation = (message.value/127.0f)*glm::pi<float>(); }
-                if(message.control==16){c2=(message.value-63.0f)/63.0f;  lattice_angle    = (message.value/127.0f)*glm::pi<float>(); }
-                
-                if(message.control==17){
-                    saturation_boost = saturation_boost.getMin() + (message.value/127.0f)*(saturation_boost.getMax()-saturation_boost.getMin()); }
-                if(message.control==18){
-                    brightness_boost = brightness_boost.getMin() + (message.value/127.0f)*(brightness_boost.getMax()-brightness_boost.getMin()); }
-                if(message.control==19){
-                    c16=(message.value)/32.0f; }
-                        //contrast_boost = contrast_boost.getMin() + (message.value/127.0f)*(contrast_boost.getMax()-contrast_boost.getMin()); }
-                if(message.control==20){
-                    c7=(message.value)/64.0f;
-                    lattice_aspect_ratio = c7;
-                }
-                
-                if(message.control==21){
-                    //c8=(message.value-63.0f)/63.0f;
-                    value_m = value_m.getMin() +(message.value/127.0f)*(value_m.getMax()-value_m.getMin());
-                }
-                
-                if(message.control==10){
-                    //c8=(message.value-63.0f)/63.0f;
-                    value_b = value_b.getMin() +(message.value/127.0f)*(value_b.getMax()-value_b.getMin());
-                }
-                
-                if(message.control==22){
-                    c9=(message.value)/129.0f;
-                    
-                    symmetry_id = int( 17*c9 );
-                }
-                
-                if(message.control==3){
-                    c10=(message.value)/128.0f;
-                    //cylinder.set(WW*c10, HH*c11);
-                    //cylinder.mapTexCoordsFromTexture( fbo.getTexture() );
-                    updateMesh();
-                }
-                if(message.control==4){
-                    c11=(message.value)/128.0f;
-                    //cylinder.set(WW*c10, HH*c11);
-                    //cylinder.mapTexCoordsFromTexture( fbo.getTexture() );
-                    
-                    
-                    for( int i = 0 ; i<  cylinder.getMesh().getNumTexCoords(); i++ ) {
-                        cout << "cylinder texcoord" << i <<" " << cylinder.getMesh().getTexCoord(i) << endl;
-                    }
-                    
-                    for( int i = 0 ; i<  coneMesh.getNumTexCoords(); i++ ) {
-                        cout << "coneMesh texcoord" << i <<" " << coneMesh.getTexCoord(i) << endl;
-                    }
-                    
-                    for( int i = 0 ; i<  cone.getMesh().getNumTexCoords(); i++ ) {
-                        cout << "cone texcoord" << i <<" " << cone.getMesh().getTexCoord(i) << endl;
-                    }
-                    cout << "c10,11,12: " << c10 << " " << c11 << " " << c12 << endl;
-                    updateMesh();
-                    
-                }
-                if(message.control==5){c12=(message.value)/123.0f; updateMesh();}
-                if(message.control==6){c13=(message.value)/63.0f; updateMesh();}
-                if(message.control==7){
-                    c14=(message.value)/128.0f;
-                    cone.setOrientation(glm::vec3(0,0,360.0*c14));
-                    
-                } // vessel rotation
-                if(message.control==8){c15=(message.value)/128.0f;}
-                //if(message.control==9){c16=(message.value)/128.0f;}
-                
-               // if(message.control==10){c17=(message.value-63.0f)/63.0f;}
-                if(message.control==11){c18=(message.value)/128.0f;}
             }
         }
         
@@ -1081,6 +1110,12 @@ void ofApp::keyPressed(int key){
         grabScreen();
     } else if (key == ' ') {
         paused = !paused;
+    } else if (key == '1') {
+        control_mode = lattice;
+    } else if (key == '2') {
+        control_mode = input;
+    } else if (key == '3') {
+        control_mode = ControlMode::cone;
     } else if (key == 's') {
         spin = !spin;
     } else if (key == 'h') {
@@ -1155,16 +1190,27 @@ void ofApp::gotMessage(ofMessage msg){
 void ofApp::dragEvent(ofDragInfo dragInfo){ 
 
     if (dragInfo.files.size() > 0) {
-        still.load(dragInfo.files[0]);
-        use_still = true;
+        
+        imgs[0].img.load(dragInfo.files[0]);
+        cout << "loaded image " << imgs[0].img.getWidth() << " x " << imgs[0].img.getHeight()  << endl;
+        imgs[0].useCamera = false;
+        
+        imgs[0].fbo.begin();
+        ofClear(255,255,255,0);
+        imgs[0].img.draw(0,0);
+        imgs[0].fbo.end();
+
+        
+        //still.load(dragInfo.files[0]);
+//        use_still = true;
 //        glDeleteTextures(1, &texture);
 //        glGenTextures(1,&texture);
 //        setTextureArray();
         
-        still_fbo.begin();
-        ofClear(255,255,255,0);
-        still.draw(0,0);
-        still_fbo.end();
+        //still_fbo.begin();
+        //ofClear(255,255,255,0);
+       // still.draw(0,0);
+      //  still_fbo.end();
 
       }
     

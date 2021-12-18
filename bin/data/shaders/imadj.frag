@@ -1,10 +1,10 @@
 #version 120
 
 
-uniform float hue_shift;
-uniform float saturation_boost;
-uniform float brightness_boost;
-uniform float contrast_boost;
+//uniform float hue_shift;
+//uniform float saturation_boost;
+//uniform float brightness_boost;
+//uniform float contrast_boost;
 
 uniform float width;
 uniform float height;
@@ -75,3 +75,4 @@ gl_FragColor = vec4(rgb2, (r>(radius*width))? exp(-(r-(radius*width))/w) : 1.0 )
 
 }
 
+ 

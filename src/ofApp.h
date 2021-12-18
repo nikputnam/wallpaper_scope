@@ -5,7 +5,7 @@
 #include "ofMain.h"
 #include "ofxGui.h"
 #include "ofxMidi.h"
-
+#include "ImageInput.hpp"
 
 #define PADDING 30
 #define WW 1280
@@ -42,7 +42,9 @@
 #define P31M 14 //  hexagonal
 #define P6   15 //  hexagonal
 #define P6M  16 //  hexagonal
+
 enum LatticeType { rhombic, oblique, rectangular, square, hexagonal };
+enum ControlMode { cone, lattice, input };
 
 struct basis_vectors {
     glm::vec2 e1;
@@ -60,6 +62,7 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     void listMidiEventQueue() ;
     void processMidiEvents() ;
     void processMidiEvent() ;
+    void handleMidiMessage(ofxMidiMessage &message) ;
 
 		void keyPressed(int key);
 		void keyReleased(int key);
@@ -74,6 +77,9 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
 		void gotMessage(ofMessage msg);
 		
     std::map<LatticeType,std::set<LatticeType>> latticeCompat ;
+    
+    std::vector<ImageInput> imgs;
+    
     
     basis_vectors getLattice();
     
@@ -91,6 +97,8 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     ofShader*        current_shader;
     bool hex_lattice;
 
+    ControlMode control_mode;
+    
     bool use_still;
     ofImage still;
     
@@ -125,7 +133,6 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     ofxFloatSlider value_b;
     ofxFloatSlider value_m;
 
-    
     ofxToggle checkerboard;
     ofxToggle intrainversion;
     ofxToggle post_checkerboard;

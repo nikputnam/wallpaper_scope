@@ -1098,6 +1098,7 @@ void ofApp::draw(){
     //ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
 
     ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
+    
     ofDrawBitmapStringHighlight( symmetryGroupLabel[int(active_symmetry_id)]   , 20, 20 );
     
     //fbo.draw(PADDING,PADDING,WW,HH);

@@ -37,6 +37,8 @@ uniform sampler2DRect last_frame;
 uniform vec4 unskew ;
 uniform vec4   skew ;
 
+uniform int range_mode ; 
+
 const mat3 nil           = mat3(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 const mat3 id            = mat3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 const mat3 transMhalf    = mat3( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, -0.5, -0.5, 1.0 );
@@ -527,7 +529,8 @@ int n_domains = domains[symmetry_id];
 #define AMERGE(S,D) ((S)+(D)*(1.0-(S)))
 
 
-
+    vec2 new_xy = vec2(0);
+    float w = 0.0;
 
     vec4 averaged_vidcolor = vec4(0.0);
     float new_alpha = 0.0;
@@ -541,20 +544,27 @@ int n_domains = domains[symmetry_id];
                 //vec2 new_xy = origin + float(i)*e1 + float(j)*e2 + skewM*( oij + nm );
                 mat3 M = tD[(symmetry_id*MATRICES_PER_SYMMETRY)+domain1] * tDinverse[(symmetry_id*MATRICES_PER_SYMMETRY)+domain0];
 
-                vec2 new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*( floor(xyS) + vec2( M * vec3( fract(xyS),1.0) )) ;
-//                vec2 new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*(  vec2( M * vec3( fract(xyS),1.0) )) ;
+                if (range_mode == 0) {
+                    new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*( floor(xyS) + vec2( M * vec3( fract(xyS),1.0) )) ;
+                } else {
+                    new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*(  vec2( M * vec3( fract(xyS),1.0) )) ;
+                }
 
                 // cylindrical wrapping
                 new_xy.x = mod(new_xy.x + lattice_range*boxwh.x, boxwh.x);
 
                 if ((new_xy.y >= 0.0) && (new_xy.y < height) ) {
 
-                float ll = DISTANCE(new_xy,xy); // length(new_xy  - xy);
-                float ll_mouse2 = DISTANCE(new_xy, mouse); //length(new_xy  - mouse);
+           
+                if (range_mode == 0) {
+                    float ll = DISTANCE(new_xy,xy); // length(new_xy  - xy);
+                    float ll_mouse2 = DISTANCE(new_xy, mouse); //length(new_xy  - mouse);
+                    float mm = ll / weight_range;
 
-                float mm = ll / weight_range;
-
-                float w = clamp(1-mm,0,1)  ;
+                    w = clamp(1-mm,0,1)  ;
+                } else {
+                    w = 1.0;
+                }
             
                 if (w>epsilon) {
                     vec4 camera_color = texture2DRect(tex0, new_xy) ;

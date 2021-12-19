@@ -35,8 +35,6 @@
 #define P4  9   //  square
 #define P4M  10 //  square
 #define P4G  11 //  square
-
-//TODO:
 #define P3   12 //  hexagonal
 #define P3M1 13 //  hexagonal
 #define P31M 14 //  hexagonal
@@ -63,7 +61,8 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     void processMidiEvents() ;
     void processMidiEvent() ;
     void handleMidiMessage(ofxMidiMessage &message) ;
-
+    void loadLattice(string filename);
+    
 		void keyPressed(int key);
 		void keyReleased(int key);
 		void mouseMoved(int x, int y );
@@ -138,6 +137,8 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     ofxToggle post_checkerboard;
     ofxToggle post_intrainversion;
     ofxToggle lattice_lock;
+    ofxToggle infinite_range;
+
 
     
     ofxFloatSlider brightness_boost;

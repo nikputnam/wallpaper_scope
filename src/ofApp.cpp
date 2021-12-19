@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <string>
 
 //variables for the midi controllers
 float c1=0;
@@ -130,7 +131,8 @@ void ofApp::setup(){
     gui.add(post_checkerboard.setup("post checker board",false));
     gui.add(post_intrainversion.setup("post intrainversion",false));
     gui.add(lattice_lock.setup("lattice lock",false));
-    
+    gui.add(infinite_range.setup("infinite range",false));
+
     //gui.add(cam_contrast.setup(   "cam contrast",0.5,0.0,1.0));
     //gui.add(cam_brightness.setup( "cam brightness",0.5,0,1.0));
     
@@ -398,9 +400,10 @@ void ofApp::setUniforms() {
      //   ofxFloatSlider cam_hue;
     //camera_filter.
     
-    
-    
     //glm::vec2 mxy = glm::vec2(mouseX-PADDING-PADDING-WW,mouseY-PADDING);
+//    cout<< "range mode"
+    current_shader->setUniform1i("range_mode", int(infinite_range?1:0) );
+
     current_shader->setUniform1f("time", t );
     current_shader->setUniform2f("mouse", mxy );
     //cout << mxy << " <-- mouse\n";
@@ -1184,38 +1187,108 @@ void ofApp::gotMessage(ofMessage msg){
 
 }
 
+std::vector<std::string> string_split(const std::string& str) {
+    std::vector<std::string> result;
+    std::istringstream iss(str);
+    for (std::string s; iss >> s; )
+        result.push_back(s);
+    return result;
+}
+
+void ofApp::loadLattice( string filename) {
+    cout << filename << endl;
+    
+    std::ifstream file(filename);
+    std::string str;
+    int i=0;
+    int symID=-1;
+    glm::vec2 ee1;
+    glm::vec2 ee2;
+
+    while (std::getline(file, str))
+    {
+        auto tokens = string_split( str );
+        if (tokens.size() == 1) {
+            cout << tokens[0] << endl;
+        } else
+        if ( tokens.size() > 1 ) {
+            cout << tokens[0] << ".\t." << tokens[1] << ".\t" << tokens[0].compare("symmetry") << endl;
+            if (tokens[0].compare("symmetry")==0) {
+
+                if (tokens[1].compare("CMM")==0) { cout << "CMM" << "\t" << CMM <<  endl ; symID =CMM;  }
+                if (tokens[1].compare("CM")==0) { cout << "CM" << "\t" << CM << endl ; ; symID =CM;}
+                if (tokens[1].compare("P1")==0) { cout << "P1" << "\t" << P1 << endl ;; symID =P1; }
+                if (tokens[1].compare("P2")==0) { cout << "P2" << "\t" << P2 << endl ;; symID =P2; }
+                if (tokens[1].compare("PM")==0) { cout << "PM" << "\t" << PM << endl ;; symID =PM; }
+                if (tokens[1].compare("PG")==0) { cout << "PG" << "\t" << PG << endl ;; symID =PG; }
+                if (tokens[1].compare("PMM")==0) { cout << "PMM"<< "\t" << PMM << endl ;; symID =PMM; }
+                if (tokens[1].compare("PMG")==0) { cout << "PMG"<< "\t" << PMG  << endl ;; symID =PMG; }
+                if (tokens[1].compare("PGG")==0) { cout << "PMG"<< "\t" << PGG  << endl ;; symID =PGG; }
+                if (tokens[1].compare("P4")==0) { cout << "P4"<< "\t" << P4  << endl ;; symID =P4; }
+                if (tokens[1].compare("P4M")==0) { cout << "P4M"<< "\t" << P4M  << endl ;; symID =P4M; }
+                if (tokens[1].compare("P4G")==0) { cout << "P4G"<< "\t" << P4G  << endl ;; symID =P4G; }
+                if (tokens[1].compare("P3")==0) { cout << "P3"<< "\t" << P3  << endl ; ; symID =P3;}
+                if (tokens[1].compare("P6M")==0) { cout << "P6M"<< "\t" << P6M  << endl ;; symID =P6M; }
+                if (tokens[1].compare("P6")==0) { cout << "P6"<< "\t" << P6  << endl ;; symID =P6; }
+                if (tokens[1].compare("P31M")==0) { cout << "P31M"<< "\t" << P31M  << endl ;; symID =P31M; }
+                if (tokens[1].compare("P3M1")==0) { cout << "P3M1"<< "\t" << P3M1  << endl ;; symID =P3M1; }
+
+            }
+            if (tokens[0].compare("e1")==0) {
+                ee1 = glm::vec2( std::stof(tokens[1]), std::stof(tokens[2]) );
+            }
+            if (tokens[0].compare("e2")==0) {
+                ee2 = glm::vec2( std::stof(tokens[1]), std::stof(tokens[2]) );
+            }
+            
+        }
+        i++;
+    }
+    if (symID>=0) {
+        cout << "parsed " << symID << " " << ee1 << " " << ee2 << endl;
+        symmetry_id = symID;
+        e1 = ee1;
+        e2 = ee2;
+        lattice_lock = true;
+        symmetry_id.setName( symmetryGroupLabel[int(symmetry_id)] );
+        active_symmetry_id =symmetry_id;
+
+    }
+    
+}
+
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo){ 
 
     if (dragInfo.files.size() > 0) {
-        
-        for (int i = 0 ; i<dragInfo.files.size() && i<imgs.size(); i++ ) {
-            imgs[i].img.load(dragInfo.files[i]);
-            cout << "loaded image " << imgs[i].img.getWidth() << " x " << imgs[i].img.getHeight()  << endl;
-            imgs[i].useCamera = false;
-            imgs[i].active=true;
-            imgs[i].fbo.begin();
-            ofClear(255,255,255,0);
-            imgs[i].img.draw(0,0);
-            imgs[i].fbo.end();
+        int j=0;
+        for (int i = 0 ; i<dragInfo.files.size() && j<imgs.size(); i++ ) {
+            auto extension = std::filesystem::path(dragInfo.files[i]).extension() ;
+            cout << "dragged filename " << dragInfo.files[i] << " extension: " << extension << endl;
+            
+            if (
+                extension.compare(".png")==0 ||
+                extension.compare(".jpg")==0 ||
+                extension.compare(".jpeg")==0
+                ) {
+                imgs[j].img.load(dragInfo.files[i]);
+                cout << "loaded image " << imgs[j].img.getWidth() << " x " << imgs[j].img.getHeight()  << endl;
+                imgs[j].useCamera = false;
+                imgs[j].active=true;
+                imgs[j].fbo.begin();
+                ofClear(255,255,255,0);
+                imgs[j].img.draw(0,0);
+                imgs[j].fbo.end();
+                j++;
+            } else if (
+                extension.compare(".txt")==0 ||
+                extension.compare(".text")==0
+            ) {
+                loadLattice(dragInfo.files[i]);
+            }
         }
-        
-        //still.load(dragInfo.files[0]);
-//        use_still = true;
-//        glDeleteTextures(1, &texture);
-//        glGenTextures(1,&texture);
-//        setTextureArray();
-        
-        //still_fbo.begin();
-        //ofClear(255,255,255,0);
-       // still.draw(0,0);
-      //  still_fbo.end();
-
       }
-    
 }
-
-
 
 //--------------------------------------------------------------
 void ofApp::newMidiMessage(ofxMidiMessage& msg) {

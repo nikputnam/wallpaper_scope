@@ -52,11 +52,11 @@ void ImageInput::draw() {
                     img_shader->setUniform1f("height",float(img.getHeight()));
                 }
                 img_shader->setUniform1f("angle",float( angle));
-                img_shader->setUniform1f("scale",float( 1.0/scale ));
+                img_shader->setUniform1f("scale",float( exp(-scale) ));
                 img_shader->setUniform1f("radius",float( spotlight ));
                 img_shader->setUniform1f("w",float( 100.0*spotlight_margin ));
                 if (useCamera) {
-                    vidGrabber->draw(0,0,WW,HH);
+                    vidGrabber->draw(int(x*WW),int(y*HH),WW,HH);
                 } else {
                     fbo.draw(int(x*WW),int(y*HH));
                 }
@@ -77,7 +77,7 @@ void ImageInput::setup( string name,ofShader* shader, ofVideoGrabber* grabber ) 
     angle.set("angle",0,0,2.0*glm::pi<float>());   parameters.add(angle);
     x.set("x",0,0,1);   parameters.add(x);
     y.set("y",0,0,1);   parameters.add(y);
-    scale.set("scale",1,0.01,20.0);   parameters.add(scale);
+    scale.set("scale",0,-3,3);   parameters.add(scale);
     spotlight.set("spotlight",1,0.1,3.0);   parameters.add(spotlight);
     spotlight_margin.set("spotlight margin",1,0.01,20.0);   parameters.add(spotlight_margin);
 

@@ -673,7 +673,11 @@ void ofApp::handleMidiMessage(ofxMidiMessage &message) {
     if(message.control==18){
         brightness_boost = brightness_boost.getMin() + (message.value/127.0f)*(brightness_boost.getMax()-brightness_boost.getMin()); }
     if(message.control==19){
-        c16=(message.value)/32.0f; }
+        c16=(message.value)/32.0f;
+        imgs[0].scale = c16;
+
+        
+    }
             //contrast_boost = contrast_boost.getMin() + (message.value/127.0f)*(contrast_boost.getMax()-contrast_boost.getMin()); }
     if(message.control==20){
         c7=(message.value)/64.0f;
@@ -702,7 +706,10 @@ void ofApp::handleMidiMessage(ofxMidiMessage &message) {
         }
     }
     
-    if(message.control==8){c15=(message.value)/128.0f;}
+    if(message.control==8){
+        c15=(message.value)/128.0f;
+        imgs[0].angle = c15 * glm::pi<float>();
+    }
     //if(message.control==9){c16=(message.value)/128.0f;}
     
    // if(message.control==10){c17=(message.value-63.0f)/63.0f;}

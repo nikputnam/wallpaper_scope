@@ -121,6 +121,48 @@ const int sectors[64] = int[64](
     0,0,0,0,0,0,6,7  // 56 - 63
 );
 
+const int n_color_domains = 3;
+
+const int v1_color_rot_fact =  1;
+const int v2_color_rot_fact = -1;
+
+const mat4 id4 = mat4(
+            1.0, 0.0, 0.0, 0.0, 
+            0.0, 1.0, 0.0, 0.0, 
+            0.0, 0.0, 1.0, 0.0, 
+            0.0, 0.0, 0.0, 1.0
+         );
+
+const mat4 black2red = mat4(
+            -1.0, 0.0, 0.0, 1.0, 
+             0.0, 0.0, 1.0, 0.0, 
+             0.0, 1.0, 0.0, 0.0, 
+             0.0, 0.0, 0.0, 1.0
+         );
+
+const mat4 invert = mat4(
+            -1.0,  0.0,  0.0, 1.0, 
+             0.0, -1.0,  0.0, 1.0, 
+             0.0,  0.0, -1.0, 1.0, 
+             0.0,  0.0,  0.0, 1.0
+         );
+
+const mat4 color_transf[3] = mat4[3](
+    id4,
+    black2red,
+    invert
+);
+
+const mat4 color_transfI[3] = mat4[3](
+    id4,
+    black2red,
+    invert
+);
+
+#define MODMOD(x,m) ( (x)>=0 ? mod((x),(m)) : (m)-mod((-x),(m)) )
+//#define COLOR_DOMAIN(v1n,v2n,)
+//#define colorTransf(i,j) (  )
+
 //the the other shader for these:
 //#define CMM 0   //  rhombic  
 //#define CM  1   //  rhombic
@@ -176,6 +218,23 @@ const int domain[N_SYMMETRIES*N_SECTORS_PLUS_ONE] = int[N_SYMMETRIES*N_SECTORS_P
     5,6,7,8,   // 5,6,7,8
     9,10,11,0   // 9,10,11,12
 
+);
+
+const int color_region[N_SYMMETRIES*N_SECTORS_PLUS_ONE ] = int[N_SYMMETRIES*N_SECTORS_PLUS_ONE ]( 
+//p3  
+        0,   0,0,0,0,    1,1,    -1,-1,    0,0,0,0,
+
+//p3m1  
+        0,   0,0,0,0,    1,1,    -1,-1,    0,0,0,0,
+
+//p31m 
+        0,   0,0,0,0,    1,1,    -1,-1,    0,0,0,0,
+
+//p6 
+        0,   0,0,0,0,    1,1,    -1,-1,    0,0,0,0,
+
+//p6m 
+        0,   0,0,0,0,    1,1,    -1,-1,    0,0,0,0
 );
 
 const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_PER_SYMMETRY]( //id,
@@ -330,7 +389,6 @@ const mat3 tDinverse[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MAT
 //vec2 one_wrap = vec2(  )
 vec2 boxwh = vec2(width,0);
 
-
 #define SECTOR(x, y) sectors[int( int(x<y) + 2*int((x+y)>1) + 4*int(y>1.0-2.0*x) + 8*int(y>1.0-0.5*x) + 16*int(y>0.5-0.5*x) + 32*int(y>2.0-2.0*x)) ]
 #define DOMAIN(g, s ) domain[((g-ID_OFFSET)*N_SECTORS_PLUS_ONE)+SECTOR(s.x,s.y)]
 #define DISTANCE(x,y) (min( length(y+boxwh-x) , min( length(x-y), length( x+boxwh-y  ) )))
@@ -403,6 +461,12 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
     vec4 averaged_vidcolor = vec4(0.0);
     float new_alpha = 0.0;
 
+    int sec_cf = color_region[((symmetry_id-ID_OFFSET)*N_SECTORS_PLUS_ONE)+sector0];
+    int v1_cf = int(oij.x)*v1_color_rot_fact ;
+    int v2_cf = int(oij.y)*v2_color_rot_fact ;
+    int color_domain0 = sec_cf + v1_cf  + v2_cf;
+    color_domain0 = int(MODMOD( color_domain0 ,n_color_domains));
+
 //    vec2 xySp = xyS + vec2(0.1,0.1);
     for(int i=-lattice_range;i<=lattice_range;++i) {
         for(int j=-lattice_range;j<=lattice_range;++j) {
@@ -420,9 +484,8 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
 
                 // cylindrical wrapping
                 new_xy.x = mod(new_xy.x + 5.0*(boxwh.x), boxwh.x);
-                //new_xy.x = mod(new_xy.x , boxwh.x);
+                //new_xy.x = mod(new_xy.x , boxwh.x);    
 
-             
                 if ((new_xy.y >= 0.0) && (new_xy.y < height) ) {
                 
                     if (range_mode == 0) {
@@ -443,10 +506,20 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
                     new_alpha = AMERGE(w*(mix_f)*feedback_color.a ,new_alpha);
                     new_alpha = AMERGE(w*(1.0-mix_f)*camera_color.a,new_alpha);
 
-                    if ((checkerboard==1) && (mod(i+j,2)==1))               { 
+                    if ((checkerboard==1)) { //  && (mod(i+j,2)==1))               { 
                         //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
-                        camera_color.rgb = vec3(1.0) - camera_color.rgb;
-                        feedback_color.rgb = vec3(1.0) - feedback_color.rgb;
+                        //camera_color.rgb = vec3(1.0) - camera_color.rgb;
+                        int sector1 = SECTOR(new_xy.x, new_xy.y);
+
+                        sec_cf = color_region[((symmetry_id-ID_OFFSET)*N_SECTORS_PLUS_ONE)+sector1];
+                        v1_cf = (int(oij.x)+i)*v1_color_rot_fact ;
+                        v2_cf = (int(oij.y)+j)*v2_color_rot_fact ;
+                        int color_domain1 = sec_cf + v1_cf  + v2_cf;
+                        color_domain1 = int(MODMOD( color_domain1 ,n_color_domains));
+
+                        mat4 colorM = color_transf[color_domain0 ]*color_transfI[color_domain1 ];
+
+                        feedback_color.rgb = (colorM*vec4(feedback_color.rgb,1)).rgb ; //vec3(1.0) - feedback_color.rgb;
 
                     }
                     if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { 

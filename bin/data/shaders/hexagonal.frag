@@ -430,7 +430,7 @@ vec2 mouseIJ = floor(mouseS);
 //vec2 xyS = unskew * (gl_TexCoord[0].xy - offset) ;
 //vec2 xyS = (gl_TexCoord[0].xy - offset) ;
 
-if ( mouseIJ == oij ) { gl_FragColor = vec4(1.0,0,0,1.0); return ; }
+//if ( mouseIJ == oij ) { gl_FragColor = vec4(1.0,0,0,1.0); return ; }
 
 float n = xyS.x ;// /200.0; 
 float m = xyS.y ; ///200.0;
@@ -491,6 +491,10 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
     int color_domain0 = sec_cf + v1_cf  + v2_cf;
     color_domain0 = int(MODMOD( float(color_domain0) ,float(n_color_domains)));
 
+    //if (color_domain0 < 0 || color_domain0 >2 ) {  gl_FragColor = vec4(0.0,1.0,1.0,1.0); return ;  }
+
+    int sector1 = 0;
+
 //    vec2 xySp = xyS + vec2(0.1,0.1);
     for(int i=-lattice_range;i<=lattice_range;++i) {
         for(int j=-lattice_range;j<=lattice_range;++j) {
@@ -498,19 +502,30 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
                 //vec2 new_xy = origin + float(i)*e1 + float(j)*e2 + skewM*( oij + nm );
                 mat3 M = tD[((symmetry_id-ID_OFFSET)*MATRICES_PER_SYMMETRY)+domain1] * tDinverse[((symmetry_id-ID_OFFSET)*MATRICES_PER_SYMMETRY)+domain0];
 
+                vec2 fract_new_xyS =  vec2( M * vec3( fract(xyS),1.0) ) ;
                 if (range_mode == 0) {
-                    new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*( floor(xyS) + vec2( M * vec3( fract(xyS),1.0) )) ;
+                    
+                    new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*( floor(xyS) + fract_new_xyS ) ;
                 } else {
-                    new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*(  vec2( M * vec3( fract(xyS),1.0) )) ;
+                    new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*(  fract_new_xyS) ;
                 }
+                fract_new_xyS = fract( fract_new_xyS );
+                sector1 = SECTOR(fract_new_xyS.x, fract_new_xyS.y);
 
+                vec2 new_xyS = unskewM * ( new_xy - origin);
+                vec2 new_ij = floor(new_xyS);
 //                new_xy = vec2( mod((new_xy.x + width), width ), new_xy.y );
 
+                //TODO:  turn back on
                 // cylindrical wrapping
-                new_xy.x = mod(new_xy.x + 5.0*(boxwh.x), boxwh.x);
+                //new_xy.x = mod(new_xy.x + 5.0*(boxwh.x), boxwh.x);
+                
                 //new_xy.x = mod(new_xy.x , boxwh.x);    
 
-                if ((new_xy.y >= 0.0) && (new_xy.y < height) ) {
+                if ( (new_xy.y >= 0.0) && (new_xy.y < height) 
+                // TODO:  turn off
+                && ( (new_xy.x >= 0.0) && (new_xy.x < width) )
+                ) {
                 
                     if (range_mode == 0) {
                         float ll = DISTANCE(new_xy,xy); // length(new_xy  - xy);
@@ -526,22 +541,22 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
                     vec4 feedback_color = texture2DRect(last_frame, new_xy);
                     //new_alpha = max( camera_color.a, new_alpha );
                     //new_alpha = max( feedback_color.a, new_alpha );
-
+  
                     new_alpha = AMERGE(w*(mix_f)*feedback_color.a ,new_alpha);
                     new_alpha = AMERGE(w*(1.0-mix_f)*camera_color.a,new_alpha);
 
                     if ((checkerboard==1)) { //  && (mod(i+j,2)==1))               { 
                         //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
                         //camera_color.rgb = vec3(1.0) - camera_color.rgb;
-                        int sector1 = SECTOR(new_xy.x, new_xy.y);
+                        //int sector1 = SECTOR(new_xy.x, new_xy.y);
 
                         sec_cf = color_region[((symmetry_id-ID_OFFSET)*N_SECTORS_PLUS_ONE)+sector1];
 
                         //v1_cf = int(MODMOD( (30+(int(oij.x)+i)*v1_color_rot_fact), n_color_domatins)) ;
                         //v2_cf = int(MODMOD( (30+(int(oij.y)+j)*v2_color_rot_fact), n_color_domatins)) ;
 
-                        v1_cf = 30+(int(oij.x)+i)*v1_color_rot_fact ;
-                        v2_cf = 30+(int(oij.y)+j)*v2_color_rot_fact ;
+                        v1_cf = 30+(int(new_ij.x))*v1_color_rot_fact ;
+                        v2_cf = 30+(int(new_ij.y))*v2_color_rot_fact ;
                         
                         v1_cf = int(MODMOD( v1_cf , n_color_domains) );
                         v2_cf = int(MODMOD( v2_cf , n_color_domains) );
@@ -549,10 +564,15 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
                         int color_domain1 = sec_cf + v1_cf  + v2_cf;
                         color_domain1 = int(MODMOD( float(color_domain1) ,float(n_color_domains)));
 
-                        mat4 colorM = color_transf[color_domain0 ]*color_transfI[color_domain1 ];
-                        if ( color_domain0 != color_domain1 ) { 
-                            feedback_color.rgb = (colorM*vec4(feedback_color.rgb,1)).rgb ; //vec3(1.0) - feedback_color.rgb;
-                        }
+                        //if (color_domain1 < 0 || color_domain1 >2 ) {  gl_FragColor = vec4(0.0,0.0,1.0,1.0); return ;  }
+
+                        mat4 colorM = color_transf[color_domain0 ] * color_transfI[color_domain1 ];
+                        //if ( color_domain0 != color_domain1 ) { 
+                            vec4 flipped_color = (colorM*vec4(feedback_color.rgb,1)) ; //vec3(1.0) - feedback_color.rgb;
+                            feedback_color.rgb = flipped_color.rgb;
+                        //}
+                        camera_color.rgb = (color_transf[color_domain0 ]*vec4(camera_color.rgb,1)).rgb ; //vec3(1.0) - feedback_color.rgb;
+
                     }
                     if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { 
                         //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
@@ -573,6 +593,13 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
     averaged_vidcolor  = averaged_vidcolor * (1.0 / averaged_vidcolor.a );
 
     vec3 rgb1 = averaged_vidcolor.rgb;
+
+    if ((post_checkerboard==1)) { 
+    //    rgb2 = vec3(1.0) - rgb2; 
+        rgb1.rgb = (color_transf[color_domain0 ]*vec4(rgb1.rgb,1)).rgb;
+    }
+    
+
     vec3 hsv1 = rgb2hsv(rgb1);
     //vec3 hsv2  = vec3( fract(hsv1.x+0.5*time+hue_shift), hsv1.y, hsv1.y < 0.5 ? smoothstep(0,1,clamp( brightness_boost* hsv1.z,0,1)) : hsv1.z ) ;
 
@@ -584,7 +611,15 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
     vec3 rgb2 = hsv2rgb(hsv2);
 
     vec2 ij = floor(xyS) ;
-    if ((post_checkerboard==1) && (mod(ij.x+ij.y,2)==1)) { rgb2 = vec3(1.0) - rgb2; }
+    //if ((post_checkerboard==1) && (mod(ij.x+ij.y,2)==1)) { rgb2 = vec3(1.0) - rgb2; }
+    
+    /*
+    if ((post_checkerboard==1)) { 
+    //    rgb2 = vec3(1.0) - rgb2; 
+        rgb2.rgb = (color_transf[color_domain0 ]*vec4(rgb2.rgb,1)).rgb;
+    }
+    */
+    
     if ((post_intrainversion==1) && (mod(domain0,2)==1)) { rgb2 = vec3(1.0) - rgb2; }
 
 

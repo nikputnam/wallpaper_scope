@@ -673,9 +673,8 @@ void ofApp::handleMidiMessage(ofxMidiMessage &message) {
     if(message.control==18){
         brightness_boost = brightness_boost.getMin() + (message.value/127.0f)*(brightness_boost.getMax()-brightness_boost.getMin()); }
     if(message.control==19){
-        c16=(message.value)/32.0f;
-        imgs[0].scale = c16;
-
+        c16=(message.value)/127.0f;
+        imgs[0].scale = imgs[0].scale.getMin() + c16*(imgs[0].scale.getMax()-imgs[0].scale.getMin());
         
     }
             //contrast_boost = contrast_boost.getMin() + (message.value/127.0f)*(contrast_boost.getMax()-contrast_boost.getMin()); }

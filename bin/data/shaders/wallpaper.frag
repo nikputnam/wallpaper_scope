@@ -110,6 +110,49 @@ const int sectors[32] = int[32](
     16,15                     // 30,31
 );
 
+
+#define N_COLOR_DOMAINS 2
+const int n_color_domains = N_COLOR_DOMAINS;
+
+const int v1_color_rot_fact =  1;
+const int v2_color_rot_fact =  1;
+
+const mat4 id4 = mat4(
+            1.0, 0.0, 0.0, 0.0, 
+            0.0, 1.0, 0.0, 0.0, 
+            0.0, 0.0, 1.0, 0.0, 
+            0.0, 0.0, 0.0, 1.0
+         );
+
+const mat4 black2red = mat4(
+            -1.0, 0.0, 0.0, 0.0, 
+             0.0, 0.0, 1.0, 0.0, 
+             0.0, 1.0, 0.0, 0.0, 
+            1.0, 0.0, 0.0, 1.0
+         );
+
+const mat4 invert = mat4(
+            -1.0,  0.0,  0.0, 0.0, 
+             0.0, -1.0,  0.0, 0.0, 
+             0.0,  0.0, -1.0, 0.0, 
+             1.0,  1.0,  1.0, 1.0
+         );
+
+const mat4 color_transf[N_COLOR_DOMAINS] = mat4[N_COLOR_DOMAINS](
+    id4,
+   // black2red,
+    invert
+);
+
+const mat4 color_transfI[N_COLOR_DOMAINS] = mat4[N_COLOR_DOMAINS](
+    id4,
+ //   black2red,
+    invert
+);
+
+#define MODMOD(x,m) ( ((x)>=0) ? (mod((x),(m))) : ((m)-mod((-x),(m))) )
+
+
 #define CMM 0   //  rhombic  
 #define CM  1   //  rhombic
 #define P1  2   //  oblique
@@ -218,6 +261,52 @@ const int domain[N_SYMMETRIES*N_SECTORS_PLUS_ONE] = int[N_SYMMETRIES*N_SECTORS_P
     1,1,0,0    // 13,14,15,16
 
 );
+
+
+const int color_region[N_SYMMETRIES*N_SECTORS_PLUS_ONE ] = int[N_SYMMETRIES*N_SECTORS_PLUS_ONE ]( 
+  // cmm
+    0, 0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
+    //cm
+          0, 0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
+
+    //p1
+     0, 0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
+
+    //p2
+     0, 0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
+
+        //pm
+    0, 0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
+
+            //pg
+    0, 0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
+
+
+            //pmm
+    0, 0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
+
+     //pmg
+    0, 0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
+
+         //pgg
+    0, 0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
+
+    //p4
+    0, 0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
+
+     //p4m
+      0, 0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
+
+
+      //p4g
+      0,
+    0,1,1,0,   // 1,2,3,4
+    0,0,1,1,   // 5,6,7,8
+    1,0,0,1,   // 9,10,11,12
+    1,1,0,0    // 13,14,15,16
+
+);
+
 
 const mat3 tD[N_SYMMETRIES*MATRICES_PER_SYMMETRY] = mat3[N_SYMMETRIES*MATRICES_PER_SYMMETRY]( //id,
 //CMM  (the first 8)
@@ -482,31 +571,28 @@ void main(){
 mat2 unskewM = mat2( unskew );
 mat2 skewM = mat2( skew );
 
-vec2 xyS = unskewM * ( gl_TexCoord[0].xy  - origin);
+vec2 xy =  gl_TexCoord[0].xy;
+
+vec2 xyS = unskewM * ( xy  - origin);
 //vec2 wrap_ij = floor( unskewM * ( boxwh ) );
-//vec2 oij = floor(xyS);
 //vec2 nm  = fract(xyS);
 vec2 mouseS = unskewM * (mouse-origin);
 //vec2 xyS = unskew * (gl_TexCoord[0].xy - offset) ;
 //vec2 xyS = (gl_TexCoord[0].xy - offset) ;
 
-float n = xyS.x ;// /200.0; 
-float m = xyS.y ; ///200.0;
+//float n = xyS.x ;// /200.0; 
+//float m = xyS.y ; ///200.0;
 
-float x = gl_TexCoord[0].x ;
-float y = gl_TexCoord[0].y ;
-vec2 xy =  gl_TexCoord[0].xy;
+//float x = gl_TexCoord[0].x ;
+//float y = gl_TexCoord[0].y ;
 //vec2 xy = vec2(width-x,y)  ;
 vec2 fractXY = fract(xyS);
 
 int domain0 = DOMAIN(symmetry_id, fract(xyS) );
 int sector0 = SECTOR(fractXY.x, fractXY.y);
  
-if ( (sector0 == 0)) {  // for debugging:  signals an error;
-//if ( domain0 == 0 ) {  // for debugging:  signals an error;
-    gl_FragColor = vec4(1.0,0,0,1.0);
-
-} else { 
+if ( (sector0 == 0)  )                  {  gl_FragColor = vec4(1.0,1,0,1.0); return; } 
+if ( (sector0 > N_SECTORS_PLUS_ONE-1) ) {  gl_FragColor = vec4(0.0,1,1,1.0); return; } 
 
 //vec4 vidColor = texture2DRect(tex0, gl_TexCoord[0].xy);
 vec4 vidColor = mix( texture2DRect(tex0, gl_TexCoord[0].xy)  ,texture2DRect(last_frame, gl_TexCoord[0].xy), mix_f ); // texture2DRect(tex0, xy);
@@ -536,6 +622,24 @@ int n_domains = domains[symmetry_id];
     float new_alpha = 0.0;
 
     float epsilon = 0.01;
+
+
+    if ((((symmetry_id)*N_SECTORS_PLUS_ONE)+sector0)>=(N_SYMMETRIES*N_SECTORS_PLUS_ONE )) {gl_FragColor = vec4(0.0,1.0,0,1.0); return;}
+    //int sec_cf =  color_region[(((symmetry_id)*N_SECTORS_PLUS_ONE)+sector0)];
+    //if (sec_cf < 0) { gl_FragColor = vec4(1.0,1.0,1.0,1.0); return; } 
+    //sec_cf = 0;
+    //vec2 oij = floor(xyS);
+/*
+    int v1_cf = 0;// (30+(int(oij.x))*v1_color_rot_fact) ;
+    int v2_cf = 0;// (30+(int(oij.y))*v2_color_rot_fact) ;
+    v1_cf = 0; // int(MODMOD( v1_cf , n_color_domains)) ;
+    v2_cf = 0; // int(MODMOD( v2_cf , n_color_domains)) ;
+    int color_domain0 = sec_cf + v1_cf  + v2_cf;
+    color_domain0 = 0; // int(MODMOD( float(color_domain0) ,float(n_color_domains)));
+
+
+    int sector1 = 0;
+*/
 
 //    vec2 xySp = xyS + vec2(0.1,0.1);
     for(int i=-lattice_range;i<=lattice_range;++i) {
@@ -632,7 +736,6 @@ vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y,  clamp(  smoothstep
 
 
     gl_FragColor = vec4(rgb2,new_alpha) ; // 
-}
 
 //gl_FragColor = vec4(0) ;
 

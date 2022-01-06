@@ -224,6 +224,7 @@ const int domain[N_SYMMETRIES*N_SECTORS_PLUS_ONE] = int[N_SYMMETRIES*N_SECTORS_P
 const int color_region[N_SYMMETRIES*N_SECTORS_PLUS_ONE ] = int[N_SYMMETRIES*N_SECTORS_PLUS_ONE ]( 
 //p3  
         0,   0,0,0,0,    1,1,    -1,-1,    0,0,0,0,
+//        0,   0,1,-1,0,    1,-1,    0,1,    -1,0,1,-1,
 
 //p3m1  
         0,   0,0,0,0,    1,1,    -1,-1,    0,0,0,0,
@@ -518,13 +519,13 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
 
                 //TODO:  turn back on
                 // cylindrical wrapping
-                //new_xy.x = mod(new_xy.x + 5.0*(boxwh.x), boxwh.x);
+                new_xy.x = mod(new_xy.x + 5.0*(boxwh.x), boxwh.x);
                 
                 //new_xy.x = mod(new_xy.x , boxwh.x);    
 
                 if ( (new_xy.y >= 0.0) && (new_xy.y < height) 
                 // TODO:  turn off
-                && ( (new_xy.x >= 0.0) && (new_xy.x < width) )
+                //&& ( (new_xy.x >= 0.0) && (new_xy.x < width) )
                 ) {
                 
                     if (range_mode == 0) {
@@ -571,7 +572,7 @@ int n_domains = domains[(symmetry_id-ID_OFFSET)];
                             vec4 flipped_color = (colorM*vec4(feedback_color.rgb,1)) ; //vec3(1.0) - feedback_color.rgb;
                             feedback_color.rgb = flipped_color.rgb;
                         //}
-                        camera_color.rgb = (color_transf[color_domain0 ]*vec4(camera_color.rgb,1)).rgb ; //vec3(1.0) - feedback_color.rgb;
+                        //camera_color.rgb = (color_transf[color_domain0 ]*vec4(camera_color.rgb,1)).rgb ; //vec3(1.0) - feedback_color.rgb;
 
                     }
                     if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { 

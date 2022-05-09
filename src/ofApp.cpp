@@ -103,6 +103,7 @@ void ofApp::setup(){
     paused = false;
     mouseDown = false;
     spin = true;
+    autoBrightness = true;
     dragXY = glm::vec2(0,0);
     
     gui.setup();
@@ -608,12 +609,11 @@ void ofApp::update(){
             filter.draw(0,0);
         current_shader->end();
     fbo.end();
-     
-        
-    
- 
+
     if (framecount == 1) {
-        imageHistogram();
+            //cout << "autoB" << endl;
+            imageHistogram();
+        
         framecount = 0;
     } else {
         feedback.begin();
@@ -622,8 +622,7 @@ void ofApp::update(){
         feedback.end();
     }
     framecount += 1;
-    
-    
+
     //}
     
     if (post_checkerboard || post_intrainversion) {
@@ -660,8 +659,21 @@ void ofApp::handleMidiMessage(ofxMidiMessage &message) {
     if(message.control==24  && message.value == 127){ intrainversion = !intrainversion; }
     if(message.control==25  && message.value == 127){ post_checkerboard = !post_checkerboard; }
     if(message.control==26  && message.value == 127){ post_intrainversion = !post_intrainversion; }
-
-    
+    if(message.control==31  && message.value == 127){ feedback.begin(); ofClear(255,255,255,0); feedback.end();}
+    if(message.control==30  && message.value == 127){ grabScreen(); }
+            
+    if(message.control==29  && message.value == 127){
+            camera_filter.load("shaders/imadj");
+            luma_scale.load("shaders/luma_scale");
+            oblique_lattices.load("shaders/wallpaper");
+            hexagonal_lattices.load("shaders/hexagonal");
+    }
+    if(message.control==28  && message.value == 127){
+        autoBrightness = !autoBrightness;
+    }
+            
+            
+            
     if(message.control==14){c3=(message.value-63.0f)/63.0f;
         e1length    = e1length.getMin() + (message.value/127.0f)*(e1length.getMax()-e1length.getMin()); }
     
@@ -971,23 +983,32 @@ void ofApp::imageHistogram() {
     }
     float min_thresh = float(t0)/NBINS;
     float max_thresh = float(t1)/NBINS;
-    
+
     //cout << "range " << t0 << " " << t1  << endl;
     //cout << "range " << min_thresh << " " << max_thresh  << endl;
-
     
+    if (autoBrightness) {
+
     feedback.begin();
         ofClear(255,255,255,0);
-
         luma_scale.begin();
-    
             luma_scale.setUniform1f("t1", min_thresh );
             luma_scale.setUniform1f("t2", max_thresh );
-
             fbo.draw(0,0);
         luma_scale.end();
     feedback.end();
-     
+    } else {
+        
+        feedback.begin();
+            ofClear(255,255,255,0);
+            luma_scale.begin();
+               luma_scale.setUniform1f("t1", 0.0 );
+               luma_scale.setUniform1f("t2", 1.0 );
+                fbo.draw(0,0);
+            luma_scale.end();
+        feedback.end();
+    }
+
 }
 
 void ofApp::grabScreen() {
@@ -1134,7 +1155,7 @@ void ofApp::keyPressed(int key){
         //spin = !spin;
         
         feedback.begin();
-         ofClear(255,255,255,0);
+         ofClear(255,255,255,255);
         //vidGrabber.draw(0,0);
         feedback.end();
 

@@ -119,6 +119,7 @@ class ofApp : public ofBaseApp , public ofxMidiListener {
     bool paused;
     bool spin;
     bool hide;
+    bool autoBrightness;
 
     bool mouseDown;
     

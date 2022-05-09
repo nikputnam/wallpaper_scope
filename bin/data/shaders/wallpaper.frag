@@ -619,6 +619,7 @@ int n_domains = domains[symmetry_id];
     float w = 0.0;
 
     vec4 averaged_vidcolor = vec4(0.0);
+    //vec4 averaged_vidcolor = vec4(1.0);
     float new_alpha = 0.0;
 
     float epsilon = 0.01;
@@ -636,8 +637,6 @@ int n_domains = domains[symmetry_id];
     v2_cf = 0; // int(MODMOD( v2_cf , n_color_domains)) ;
     int color_domain0 = sec_cf + v1_cf  + v2_cf;
     color_domain0 = 0; // int(MODMOD( float(color_domain0) ,float(n_color_domains)));
-
-
     int sector1 = 0;
 */
 
@@ -651,58 +650,66 @@ int n_domains = domains[symmetry_id];
                 if (range_mode == 0) {
                     new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*( floor(xyS) + vec2( M * vec3( fract(xyS),1.0) )) ;
                 } else {
-                    new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*(  vec2( M * vec3( fract(xyS),1.0) )) ;
+                    new_xy = float(i)*e1 + float(j)*e2 + origin + skewM*(              vec2( M * vec3( fract(xyS),1.0) )) ;
                 }
 
                 // cylindrical wrapping
                 new_xy.x = mod(new_xy.x + lattice_range*boxwh.x, boxwh.x);
 
-                if ((new_xy.y >= 0.0) && (new_xy.y < height) ) {
+                if (  (new_xy.y >= 0.0) && (new_xy.y < height) ) {
+                //if (   (new_xy.y < height) ) {
 
-           
-                if (range_mode == 0) {
-                    float ll = DISTANCE(new_xy,xy); // length(new_xy  - xy);
-                    float ll_mouse2 = DISTANCE(new_xy, mouse); //length(new_xy  - mouse);
-                    float mm = ll / weight_range;
-
-                    w = clamp(1-mm,0,1)  ;
-                } else {
-                    w = 1.0;
-                }
             
-                if (w>epsilon) {
-                    vec4 camera_color = texture2DRect(tex0, new_xy) ;
-                    vec4 feedback_color = texture2DRect(last_frame, new_xy);
-                    //new_alpha = max( camera_color.a, new_alpha );
-                    //new_alpha = max( feedback_color.a, new_alpha );
-                    
-                    
-                    new_alpha = AMERGE(     w*(mix_f)*feedback_color.a , new_alpha );
-                    new_alpha = AMERGE( w*(1.0-mix_f)*camera_color.a   , new_alpha );
+                    if (range_mode == 0) {
+                        float ll = DISTANCE(new_xy,xy); // length(new_xy  - xy);
+                        float ll_mouse2 = DISTANCE(new_xy, mouse); //length(new_xy  - mouse);
+                        float mm = ll / weight_range;
 
-
-                    if ((checkerboard==1) && (mod(i+j,2)==1))               { 
-                        //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
-                        camera_color.rgb = vec3(1.0) - camera_color.rgb;
-                        feedback_color.rgb = vec3(1.0) - feedback_color.rgb;
+                        w = clamp(1-mm,0,1)  ;
+                    } else {
+                        w = 1.0;
                     }
+                
+                    if (w>epsilon) {
+                        vec4 camera_color = texture2DRect(tex0, new_xy) ;
+                        vec4 feedback_color = texture2DRect(last_frame, new_xy);
+                        //new_alpha = max( camera_color.a, new_alpha );
+                        //new_alpha = max( feedback_color.a, new_alpha );
+                        
+                        
+                        new_alpha = AMERGE(     w*(mix_f)*feedback_color.a , new_alpha );
+                        new_alpha = AMERGE( w*(1.0-mix_f)*camera_color.a   , new_alpha );
 
-                    if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { 
-                        //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
-                        camera_color.rgb = vec3(1.0) - camera_color.rgb;
-                        feedback_color.rgb = vec3(1.0) - feedback_color.rgb;
+
+                        if ((checkerboard==1) && (mod(i+j,2)==1))               { 
+                            //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
+                            camera_color.rgb = vec3(1.0) - camera_color.rgb;
+                            feedback_color.rgb = vec3(1.0) - feedback_color.rgb;
+                        }
+
+                        if ((intrainversion==1) && (mod(domain0+domain1,2)==1)) { 
+                            //lattice_vidColor.rgb = vec3(1.0) - lattice_vidColor.rgb; 
+                            camera_color.rgb = vec3(1.0) - camera_color.rgb;
+                            feedback_color.rgb = vec3(1.0) - feedback_color.rgb;
+                        }
+                        
+                        float weight_incr = 0.0;
+                        //averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(1.0-mix_f)*camera_color.a*(1.0-feedback_color.a)*camera_color.rgb ;
+                        averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(1.0-mix_f)*camera_color.a*camera_color.rgb ;
+                        weight_incr +=                                   w*(1.0-mix_f)*camera_color.a ;
+                        //averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(mix_f)*feedback_color.a*(1.0-camera_color.a)*feedback_color.rgb ;
+                        averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(mix_f)*feedback_color.a*feedback_color.rgb ;
+                        weight_incr +=                                   w*(mix_f)*feedback_color.a  ;
+
+                        // this is not alpha but total weight in the sum.
+                        averaged_vidcolor.a = averaged_vidcolor.a + weight_incr ;
                     }
-                    
-                    averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(1.0-mix_f)*camera_color.a*camera_color.rgb ;
-                    averaged_vidcolor.rgb =  averaged_vidcolor.rgb + w*(mix_f)*feedback_color.a*feedback_color.rgb ;
-
-                    averaged_vidcolor.a = averaged_vidcolor.a + w*( (1.0-mix_f)*camera_color.a + (mix_f)*feedback_color.a ) ;
                 }
-            }}
+            }
         }   
     }
 
-
+    float total_weight = averaged_vidcolor.a;
     averaged_vidcolor  = averaged_vidcolor * (1.0 / averaged_vidcolor.a );
     vec3 rgb1 = averaged_vidcolor.rgb;
     vec3 hsv1 = rgb2hsv(rgb1);
@@ -737,7 +744,16 @@ vec3 hsv2  = vec3( fract(hsv1.x+hue_shift),          hsv1.y,  clamp(  smoothstep
 
     gl_FragColor = vec4(rgb2,new_alpha) ; // 
 
+    //gl_FragColor = vec4(rgb2,1.0) ; // 
+
+
+    //debug channels:
+//    gl_FragColor = vec4(vec3(total_weight),1.0);
+    //gl_FragColor = vec4(vec3(new_alpha),1.0);
 //gl_FragColor = vec4(0) ;
+
+//    vec4 camera_color = texture2DRect(tex0, xy) ;
+//    gl_FragColor = vec4(vec3(camera_color.a),1.0);
 
 }
 
